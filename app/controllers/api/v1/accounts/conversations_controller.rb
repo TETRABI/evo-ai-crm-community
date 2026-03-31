@@ -557,7 +557,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     # fallback for the old case where we do look up only using source id
     # In future we need to change this and make sure we do look up on combination of inbox_id and source_id
     # and deprecate the support of passing only source_id as the param
-    # 🔒 SECURITY: Validate ownership through inbox account_id to prevent cross-account access
+    # Fallback: look up contact_inbox by source_id
     if @contact_inbox.blank? && params[:source_id].present?
       @contact_inbox = ::ContactInbox.joins(:inbox)
                                      .where(source_id: params[:source_id])

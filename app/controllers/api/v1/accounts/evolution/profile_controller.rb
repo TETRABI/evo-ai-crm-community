@@ -1,5 +1,5 @@
 class Api::V1::Accounts::Evolution::ProfileController < Api::V1::Accounts::BaseController
-  # POST /api/v1/accounts/:account_id/evolution/profile/:instance_name/fetch
+  # POST /api/v1/evolution/profile/:instance_name/fetch
   def fetch
     Rails.logger.info "Evolution API fetch profile called for instance: #{params[:instance_name]}"
 
@@ -29,7 +29,7 @@ class Api::V1::Accounts::Evolution::ProfileController < Api::V1::Accounts::BaseC
     end
   end
 
-  # POST /api/v1/accounts/:account_id/evolution/profile/:instance_name/name
+  # POST /api/v1/evolution/profile/:instance_name/name
   def update_name
     Rails.logger.info "Evolution API update profile name called for instance: #{params[:instance_name]}"
 
@@ -59,7 +59,7 @@ class Api::V1::Accounts::Evolution::ProfileController < Api::V1::Accounts::BaseC
     end
   end
 
-  # POST /api/v1/accounts/:account_id/evolution/profile/:instance_name/status
+  # POST /api/v1/evolution/profile/:instance_name/status
   def update_status
     Rails.logger.info "Evolution API update profile status called for instance: #{params[:instance_name]}"
 
@@ -89,7 +89,7 @@ class Api::V1::Accounts::Evolution::ProfileController < Api::V1::Accounts::BaseC
     end
   end
 
-  # POST /api/v1/accounts/:account_id/evolution/profile/:instance_name/picture
+  # POST /api/v1/evolution/profile/:instance_name/picture
   def update_picture
     Rails.logger.info "Evolution API update profile picture called for instance: #{params[:instance_name]}"
 
@@ -122,7 +122,7 @@ class Api::V1::Accounts::Evolution::ProfileController < Api::V1::Accounts::BaseC
     end
   end
 
-  # DELETE /api/v1/accounts/:account_id/evolution/profile/:instance_name/picture
+  # DELETE /api/v1/evolution/profile/:instance_name/picture
   def remove_picture
     Rails.logger.info "Evolution API remove profile picture called for instance: #{params[:instance_name]}"
 

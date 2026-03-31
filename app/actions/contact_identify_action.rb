@@ -22,10 +22,6 @@ class ContactIdentifyAction
 
   private
 
-  def account
-    @account ||= @contact.account
-  end
-
   def merge_if_existing_identified_contact
     return unless merge_contacts?(existing_identified_contact, :identifier)
 
@@ -53,19 +49,19 @@ class ContactIdentifyAction
   def existing_identified_contact
     return if params[:identifier].blank?
 
-    @existing_identified_contact ||= account.contacts.find_by(identifier: params[:identifier])
+    @existing_identified_contact ||= Contact.find_by(identifier: params[:identifier])
   end
 
   def existing_email_contact
     return if params[:email].blank?
 
-    @existing_email_contact ||= account.contacts.from_email(params[:email])
+    @existing_email_contact ||= Contact.from_email(params[:email])
   end
 
   def existing_phone_number_contact
     return if params[:phone_number].blank?
 
-    @existing_phone_number_contact ||= account.contacts.find_by(phone_number: params[:phone_number])
+    @existing_phone_number_contact ||= Contact.find_by(phone_number: params[:phone_number])
   end
 
   def merge_contacts?(existing_contact, key)
@@ -117,7 +113,6 @@ class ContactIdentifyAction
     return base_contact if base_contact.id == merge_contact.id
 
     ContactMergeAction.new(
-      account: account,
       base_contact: base_contact,
       mergee_contact: merge_contact
     ).perform

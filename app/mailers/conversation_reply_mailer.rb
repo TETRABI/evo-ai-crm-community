@@ -63,7 +63,7 @@ class ConversationReplyMailer < ApplicationMailer
 
   def init_conversation_attributes(conversation)
     @conversation = conversation
-    @account = Account.first
+    @account = nil
     @contact = @conversation.contact
     @agent = @conversation.assignee
     @inbox = @conversation.inbox
@@ -108,7 +108,7 @@ class ConversationReplyMailer < ApplicationMailer
   end
 
   def from_email
-    should_use_conversation_email_address? ? parse_email(@account.support_email) : parse_email(inbox_from_email_address)
+    should_use_conversation_email_address? ? parse_email(support_email) : parse_email(inbox_from_email_address)
   end
 
   def mail_subject
@@ -125,7 +125,7 @@ class ConversationReplyMailer < ApplicationMailer
 
   def reply_email
     if should_use_conversation_email_address?
-      sender_name("reply+#{@conversation.uuid}@#{@account.inbound_email_domain}")
+      sender_name("reply+#{@conversation.uuid}@#{inbound_email_domain}")
     else
       @inbox.email_address || @agent&.email
     end
@@ -146,7 +146,7 @@ class ConversationReplyMailer < ApplicationMailer
   def inbox_from_email_address
     return @inbox.email_address if @inbox.email_address
 
-    @account.support_email
+    support_email
   end
 
   def custom_message_id
@@ -193,8 +193,15 @@ class ConversationReplyMailer < ApplicationMailer
   end
 
   def inbound_email_enabled?
-    @inbound_email_enabled ||= @account.feature_enabled?('inbound_emails') && @account.inbound_email_domain
-                                                                                      .present? && @account.support_email.present?
+    @inbound_email_enabled ||= inbound_email_domain.present? && support_email.present?
+  end
+
+  def support_email
+    @support_email ||= GlobalConfigService.load('MAILER_SENDER_EMAIL', ENV.fetch('MAILER_SENDER_EMAIL', nil))
+  end
+
+  def inbound_email_domain
+    @inbound_email_domain ||= GlobalConfigService.load('MAILER_INBOUND_EMAIL_DOMAIN', ENV.fetch('MAILBOX_INGRESS_DOMAIN', nil))
   end
 
   def choose_layout

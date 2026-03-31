@@ -90,7 +90,7 @@ class Instagram::MessageText < Instagram::BaseMessageText
       return
     end
 
-    Rails.logger.warn("[InstagramUserFetchError]: account_id #{@inbox.account_id} inbox_id #{@inbox.id}")
+    Rails.logger.warn("[InstagramUserFetchError]: inbox_id #{@inbox.id}")
     Rails.logger.warn("[InstagramUserFetchError]: #{error_message} #{error_code}")
 
     exception = StandardError.new("#{error_message} (Code: #{error_code})")

@@ -11,7 +11,6 @@
 #  status              :string(20)       default("pending"), not null
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
-#  account_id          :uuid             not null
 #  scheduled_action_id :bigint           not null
 #  user_id             :uuid             not null
 #
@@ -19,7 +18,6 @@
 #
 #  idx_notifications_action_type                                (scheduled_action_id,notification_type)
 #  idx_notifications_user_date                                  (user_id,created_at)
-#  index_scheduled_action_notifications_on_account_id           (account_id)
 #  index_scheduled_action_notifications_on_notification_type    (notification_type)
 #  index_scheduled_action_notifications_on_scheduled_action_id  (scheduled_action_id)
 #  index_scheduled_action_notifications_on_status               (status)
@@ -27,7 +25,6 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (account_id => accounts.id) ON DELETE => cascade
 #  fk_rails_...  (scheduled_action_id => scheduled_actions.id) ON DELETE => cascade
 #  fk_rails_...  (user_id => users.id) ON DELETE => cascade
 #

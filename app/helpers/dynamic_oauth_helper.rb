@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module DynamicOauthHelper
-  def dynamic_client_id_for_account(account_id)
-    DynamicOauthService.generate_dynamic_client_id(account_id)
+  def dynamic_client_id_for_identifier(identifier)
+    DynamicOauthService.generate_dynamic_client_id(identifier)
   end
   
   def is_dynamic_client_id?(client_id)
@@ -28,8 +28,8 @@ module DynamicOauthHelper
     "#{request.base_url}/oauth/authorize?#{params.to_query}"
   end
   
-  def build_dynamic_oauth_url(account_id, redirect_uri, scope: 'admin', state: nil)
-    client_id = dynamic_client_id_for_account(account_id)
+  def build_dynamic_oauth_url(identifier, redirect_uri, scope: 'admin', state: nil)
+    client_id = dynamic_client_id_for_identifier(identifier)
     build_oauth_authorization_url(client_id, redirect_uri, scope: scope, state: state)
   end
 end

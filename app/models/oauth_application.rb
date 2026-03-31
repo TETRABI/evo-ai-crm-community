@@ -12,16 +12,10 @@
 #  uid          :string           not null
 #  created_at   :datetime         not null
 #  updated_at   :datetime         not null
-#  account_id   :uuid
 #
 # Indexes
 #
-#  index_oauth_applications_on_account_id  (account_id)
-#  index_oauth_applications_on_uid         (uid) UNIQUE
-#
-# Foreign Keys
-#
-#  fk_rails_...  (account_id => accounts.id)
+#  index_oauth_applications_on_uid  (uid) UNIQUE
 #
 class OauthApplication < Doorkeeper::Application
   validates :trusted, inclusion: { in: [true, false] }

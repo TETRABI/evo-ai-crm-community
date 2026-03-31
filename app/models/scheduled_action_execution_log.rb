@@ -13,12 +13,10 @@
 #  status              :string(50)       default("completed"), not null
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
-#  account_id          :uuid             not null
 #  scheduled_action_id :bigint           not null
 #
 # Indexes
 #
-#  idx_exec_logs_account_created                                 (account_id,created_at)
 #  idx_exec_logs_action_created                                  (scheduled_action_id,created_at)
 #  index_scheduled_action_execution_logs_on_created_at           (created_at)
 #  index_scheduled_action_execution_logs_on_scheduled_action_id  (scheduled_action_id)

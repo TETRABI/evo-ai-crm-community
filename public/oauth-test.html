@@ -886,7 +886,7 @@
 
                 log('📤 Enviando requisição para listar inboxes...', 'info');
                 log(`🎯 URL: ${evolutionUrl}/api/v1/oauth/inboxes`, 'info');
-                log('✨ Usando endpoint OAuth (sem account_id na URL)', 'info');
+                log('✨ Usando endpoint OAuth', 'info');
 
                 const response = await fetch(`${evolutionUrl}/api/v1/oauth/inboxes`, {
                     method: 'GET',
@@ -911,7 +911,7 @@
                             'Authorization': `Bearer ${accessToken.substring(0, 20)}...`,
                             'Content-Type': 'application/json'
                         },
-                        note: 'OAuth endpoint - account_id extraído automaticamente do token'
+                        note: 'OAuth endpoint'
                     },
                     response: {
                         status: response.status,
@@ -1038,7 +1038,7 @@
             log('🔄 Fluxo OAuth resetado com sucesso!', 'info');
         }
 
-        // Atualizar client_id dinâmico quando account_id mudar
+        // Atualizar client_id dinâmico
         function updateDynamicClientId() {
             const oauthMode = document.getElementById('oauthMode').value;
             if (oauthMode === 'dynamic') {

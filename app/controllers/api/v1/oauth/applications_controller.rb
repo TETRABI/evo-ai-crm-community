@@ -5,7 +5,6 @@ class Api::V1::Oauth::ApplicationsController < Api::BaseController
 
   def create
     client_id = params[:client_id]
-    account_id = params[:account_id]
     redirect_uri = params[:redirect_uri]
 
     unless client_id && redirect_uri
@@ -18,21 +17,18 @@ class Api::V1::Oauth::ApplicationsController < Api::BaseController
       existing_app = OauthApplication.find_by(uid: client_id)
       
       if existing_app&.rfc7591_registered?
-        # Vincular aplicação RFC7591 à account
-        existing_app.update!(account_id: account_id)
-        
-        Rails.logger.debug "RFC 7591: Bound application #{existing_app.name}" if Rails.env.development?
-        
-        render json: { 
-          message: 'Application bound to account successfully',
-          application_id: existing_app.id,
-          account_id: account_id
+        # Single-tenant: no account binding needed
+        Rails.logger.debug "RFC 7591: Application #{existing_app.name} ready" if Rails.env.development?
+
+        render json: {
+          message: 'Application ready',
+          application_id: existing_app.id
         }
       else
         # Criar nova aplicação dinâmica
         application = DynamicOauthService.create_or_find_application_for_account(
           client_id,
-          account_id,
+          nil,
           current_user,
           redirect_uri
         )
@@ -44,10 +40,9 @@ class Api::V1::Oauth::ApplicationsController < Api::BaseController
 
         Rails.logger.debug "Dynamic OAuth: Created application #{application.name}" if Rails.env.development?
 
-        render json: { 
+        render json: {
           message: 'Application created successfully',
-          application_id: application.id,
-          account_id: account_id
+          application_id: application.id
         }
       end
     rescue => e

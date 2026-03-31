@@ -152,7 +152,7 @@ RSpec.describe Api::V1::Accounts::ContactsController, type: :controller do
     end
   end
 
-  describe 'DELETE /api/v1/accounts/:account_id/contacts/:id' do
+  describe 'DELETE /api/v1/contacts/:id' do
     let(:user) { User.create!(email: 'test@example.com', name: 'Test User') }
     let(:contact) { Contact.create!(name: 'Test Contact', email: 'contact@example.com') }
     let(:headers) do

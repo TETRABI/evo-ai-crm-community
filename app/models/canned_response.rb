@@ -7,7 +7,6 @@
 #  short_code :string
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
-#  account_id :uuid             not null
 #
 class CannedResponse < ApplicationRecord
   validates :content, presence: true

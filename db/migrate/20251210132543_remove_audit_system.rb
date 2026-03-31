@@ -10,7 +10,6 @@ class RemoveAuditSystem < ActiveRecord::Migration[7.0]
     # Recreate audit_logs table
     create_table :audit_logs, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
       t.uuid "user_id"
-      t.uuid "account_id"
       t.string "action", null: false
       t.string "resource_type"
       t.uuid "resource_id"
@@ -23,7 +22,6 @@ class RemoveAuditSystem < ActiveRecord::Migration[7.0]
       t.integer "severity", default: 0, null: false
       t.datetime "created_at", default: -> { "now()" }, null: false
       t.datetime "updated_at", default: -> { "now()" }, null: false
-      t.index ["account_id", "created_at"], name: "index_audit_logs_on_account_id_and_created_at"
       t.index ["action"], name: "index_audit_logs_on_action"
       t.index ["created_at"], name: "index_audit_logs_on_created_at"
       t.index ["details"], name: "index_audit_logs_on_details", using: :gin

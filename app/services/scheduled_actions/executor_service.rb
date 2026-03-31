@@ -250,7 +250,7 @@ module ScheduledActions
 
       subject = scheduled_action.payload['subject']
       message = scheduled_action.payload['message']
-      from = scheduled_action.payload['from'] || Account.first&.support_email || ENV.fetch('MAILER_SENDER_EMAIL', 'noreply@example.com')
+      from = scheduled_action.payload['from'] || ENV.fetch('MAILER_SENDER_EMAIL', 'noreply@example.com')
 
       return { success: false, error: 'Subject not provided' } if subject.blank?
       return { success: false, error: 'Message not provided' } if message.blank?

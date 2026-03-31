@@ -43,7 +43,7 @@ class DynamicOauthService
     application
   end
 
-  def self.create_or_find_application_for_account(client_id, _account_id, current_user, redirect_uri = nil)
+  def self.create_or_find_application_for_account(client_id, _deprecated = nil, current_user, redirect_uri = nil)
     # Verify the user is an administrator
     return nil unless current_user.administrator?
 
@@ -84,14 +84,11 @@ class DynamicOauthService
   def self.available_accounts_for_user(user)
     return [] unless user
 
-    # In single-tenant mode, return available accounts
-    Account.all.map do |account|
-      {
-        account_id: account.id,
-        account_name: account.name,
-        dynamic_client_id: generate_dynamic_client_id(account.id)
-      }
-    end
+    # Single-tenant mode: no Account model, return a single entry
+    [{
+      account_name: GlobalConfigService.load('BRAND_NAME', 'Evo CRM'),
+      dynamic_client_id: generate_dynamic_client_id('default')
+    }]
   end
 
   private

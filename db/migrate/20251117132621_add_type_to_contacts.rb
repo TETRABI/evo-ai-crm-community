@@ -8,14 +8,12 @@ class AddTypeToContacts < ActiveRecord::Migration[7.1]
     # Adicionar coluna com ENUM
     add_column :contacts, :type, :contact_type_enum, default: 'person', null: false
     add_index :contacts, :type
-    add_index :contacts, [:account_id, :type]
-    
+
     # Atualizar contatos existentes para 'person'
     Contact.where(type: nil).update_all(type: 'person')
   end
-  
+
   def down
-    remove_index :contacts, [:account_id, :type]
     remove_index :contacts, :type
     remove_column :contacts, :type
     

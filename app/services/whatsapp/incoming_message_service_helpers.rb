@@ -15,10 +15,6 @@ module Whatsapp::IncomingMessageServiceHelpers
     @processed_params ||= params
   end
 
-  def account
-    @account ||= inbox.account
-  end
-
   def message_type
     if evolution_api?
       # Evolution API structure: data.messageType

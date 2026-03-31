@@ -9,11 +9,10 @@
 #  provider_connection :jsonb
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
-#  account_id          :uuid             not null
 #
 # Indexes
 #
-#  index_channel_whatsapp_on_account_id_and_phone_number  (account_id,phone_number) UNIQUE
+#  index_channel_whatsapp_on_phone_number  (phone_number) UNIQUE
 #
 
 class Channel::Whatsapp < ApplicationRecord

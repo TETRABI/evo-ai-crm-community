@@ -42,8 +42,8 @@ json.display_id conversation.display_id
 
 # Optimize message loading to avoid N+1 queries
 last_message = conversation.association(:messages).loaded? ?
-  conversation.messages.select { |m| m.account_id == conversation.account_id }.last :
-  conversation.messages.where(account_id: conversation.account_id).includes(:attachments).last
+  conversation.messages.last :
+  conversation.messages.includes(:attachments).last
 
 if last_message.blank?
   json.messages []
@@ -51,7 +51,6 @@ else
   json.messages [last_message.try(:push_event_data)]
 end
 
-json.account_id conversation.account_id
 json.uuid conversation.uuid
 json.additional_attributes conversation.additional_attributes
 json.agent_last_seen_at conversation.agent_last_seen_at.to_i
@@ -78,8 +77,8 @@ json.unread_count unread_count
 
 # Optimize last non-activity message to avoid N+1 queries
 last_non_activity_message = conversation.association(:messages).loaded? ?
-  conversation.messages.select { |m| m.account_id == conversation.account_id && !m.activity? }.first :
-  conversation.messages.where(account_id: conversation.account_id).non_activity_messages.first
+  conversation.messages.reject(&:activity?).first :
+  conversation.messages.non_activity_messages.first
 
 json.last_non_activity_message last_non_activity_message.try(:push_event_data)
 json.last_activity_at conversation.last_activity_at.to_i

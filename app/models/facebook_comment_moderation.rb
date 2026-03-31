@@ -14,7 +14,6 @@
 #  status               :string           default("pending"), not null
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
-#  account_id           :uuid             not null
 #  comment_id           :string           not null
 #  conversation_id      :uuid             not null
 #  message_id           :uuid             not null
@@ -23,7 +22,6 @@
 # Indexes
 #
 #  idx_on_status_moderation_type_4dd0516d2b               (status,moderation_type)
-#  index_facebook_comment_moderations_on_account_id       (account_id)
 #  index_facebook_comment_moderations_on_comment_id       (comment_id)
 #  index_facebook_comment_moderations_on_conversation_id  (conversation_id)
 #  index_facebook_comment_moderations_on_message_id       (message_id)
@@ -33,7 +31,6 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (account_id => accounts.id)
 #  fk_rails_...  (conversation_id => conversations.id)
 #  fk_rails_...  (message_id => messages.id)
 #  fk_rails_...  (moderated_by_id => users.id)

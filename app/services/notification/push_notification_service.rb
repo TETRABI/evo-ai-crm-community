@@ -47,7 +47,7 @@ class Notification::PushNotificationService
   end
 
   def push_url
-    app_account_conversation_url(account_id: Account.first&.id, id: conversation.display_id)
+    "#{ENV.fetch('FRONTEND_URL', 'http://localhost:3000')}/app/conversations/#{conversation.display_id}"
   end
 
   def can_send_browser_push?(subscription)

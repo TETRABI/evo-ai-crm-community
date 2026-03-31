@@ -1,7 +1,7 @@
 class Crm::Bms::LabelSyncJob < ApplicationJob
   queue_as :integrations
 
-  def perform(label_id, _account_id = nil, action = 'sync')
+  def perform(label_id, action = 'sync')
     @label = Label.find_by(id: label_id)
     return unless @label
 

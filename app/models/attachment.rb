@@ -13,12 +13,10 @@
 #  meta             :jsonb
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
-#  account_id       :uuid             not null
 #  attachable_id    :uuid
 #
 # Indexes
 #
-#  index_attachments_on_account_id                         (account_id)
 #  index_attachments_on_attachable_type_and_attachable_id  (attachable_type,attachable_id)
 #
 class Attachment < ApplicationRecord

@@ -1,6 +1,6 @@
 class ContactMergeAction
   include Events::Types
-  pattr_initialize [:account!, :base_contact!, :mergee_contact!]
+  pattr_initialize [:base_contact!, :mergee_contact!, { account: nil }]
 
   def perform
     # This case happens when an agent updates a contact email in dashboard,

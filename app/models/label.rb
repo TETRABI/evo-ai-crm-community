@@ -9,12 +9,10 @@
 #  title           :string
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
-#  account_id      :uuid
 #
 # Indexes
 #
-#  index_labels_on_account_id            (account_id)
-#  index_labels_on_title_and_account_id  (title,account_id) UNIQUE
+#  index_labels_on_title  (title) UNIQUE
 #
 class Label < ApplicationRecord
   include RegexHelper

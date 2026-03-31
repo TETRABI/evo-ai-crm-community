@@ -1,7 +1,7 @@
 # Herda diretamente do controller de accounts
 class Api::V1::Oauth::PipelineItemsController < Api::V1::Accounts::PipelineItemsController
   include Events::Types
-  # Remove os middlewares do controller pai que dependem de account_id na URL
+  # Remove parent controller middlewares for OAuth
   skip_before_action :authenticate_request!
 
   skip_before_action :set_pipeline
@@ -119,20 +119,6 @@ class Api::V1::Oauth::PipelineItemsController < Api::V1::Accounts::PipelineItems
 
   def doorkeeper_token_value
     request.headers['Authorization']&.gsub(/^Bearer\s+/, '')
-  end
-
-  # Simula o params[:account_id] que o controller pai espera
-  def params
-    super.merge(account_id: extract_account_id_from_token)
-  end
-
-  # Extrai account_id diretamente do token OAuth (sem recursão)
-  def extract_account_id_from_token
-    @extracted_account_id ||= begin
-      return nil unless oauth_token_present?
-      oauth_application = doorkeeper_token&.application
-      oauth_application&.account_id
-    end
   end
 
   # OAuth-aware version of parent controller methods

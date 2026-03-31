@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# Base controller for account-scoped routes WITHOUT account_id in URL
+# Base controller for account-scoped routes WITHOUT account ID in URL
 # Padrão: accountId deve estar apenas no header account-id (conforme API_RESPONSE_STANDARD.md)
-# Este controller permite rotas como /api/v1/accounts/inboxes em vez de /api/v1/accounts/:account_id/inboxes
+# Este controller permite rotas como /api/v1/accounts/inboxes (single-tenant, no account ID in path)
 class Api::V1::Accounts::BaseControllerWithoutAccountId < Api::BaseController
   include SwitchLocale
   include ApiResponseHelper

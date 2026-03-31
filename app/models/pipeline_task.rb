@@ -15,7 +15,6 @@
 #  title            :string(255)      not null
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
-#  account_id       :uuid             not null
 #  assigned_to_id   :uuid
 #  created_by_id    :uuid             not null
 #  parent_task_id   :uuid
@@ -23,12 +22,10 @@
 #
 # Indexes
 #
-#  index_pipeline_tasks_on_account_id                              (account_id)
-#  index_pipeline_tasks_on_account_id_and_due_date                 (account_id,due_date)
-#  index_pipeline_tasks_on_account_id_and_parent_task_id           (account_id,parent_task_id)
 #  index_pipeline_tasks_on_assigned_to_id                          (assigned_to_id)
 #  index_pipeline_tasks_on_assigned_to_id_and_status_and_due_date  (assigned_to_id,status,due_date)
 #  index_pipeline_tasks_on_created_by_id                           (created_by_id)
+#  index_pipeline_tasks_on_due_date                                (due_date)
 #  index_pipeline_tasks_on_parent_task_id                          (parent_task_id)
 #  index_pipeline_tasks_on_parent_task_id_and_position             (parent_task_id,position)
 #  index_pipeline_tasks_on_pending_status_and_due_date             (status,due_date) WHERE (status = 0)
@@ -38,7 +35,6 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (account_id => accounts.id)
 #  fk_rails_...  (assigned_to_id => users.id)
 #  fk_rails_...  (created_by_id => users.id)
 #  fk_rails_...  (parent_task_id => pipeline_tasks.id)

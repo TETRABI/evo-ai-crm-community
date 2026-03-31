@@ -8,12 +8,10 @@
 #  name              :string           not null
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
-#  account_id        :uuid             not null
 #
 # Indexes
 #
-#  index_teams_on_account_id           (account_id)
-#  index_teams_on_name_and_account_id  (name,account_id) UNIQUE
+#  index_teams_on_name  (name) UNIQUE
 #
 class Team < ApplicationRecord
   has_many :team_members, dependent: :destroy_async

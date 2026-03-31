@@ -3,7 +3,7 @@
 class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseController
   before_action :set_instance_params
 
-  # GET /api/v1/accounts/:account_id/zapi/settings/:instance_id
+  # GET /api/v1/zapi/settings/:instance_id
   # Retorna status e dados da instância
   def show
 
@@ -90,7 +90,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
     end
   end
 
-  # PUT /api/v1/accounts/:account_id/zapi/settings/:instance_id/profile-picture
+  # PUT /api/v1/zapi/settings/:instance_id/profile-picture
   def update_profile_picture
 
     begin
@@ -105,7 +105,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
     end
   end
 
-  # PUT /api/v1/accounts/:account_id/zapi/settings/:instance_id/profile-name
+  # PUT /api/v1/zapi/settings/:instance_id/profile-name
   def update_profile_name
 
     begin
@@ -120,7 +120,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
     end
   end
 
-  # PUT /api/v1/accounts/:account_id/zapi/settings/:instance_id/update-instance-name
+  # PUT /api/v1/zapi/settings/:instance_id/update-instance-name
   def update_instance_name
     begin
       name = params[:value] || params[:name]
@@ -134,7 +134,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
     end
   end
 
-  # PUT /api/v1/accounts/:account_id/zapi/settings/:instance_id/profile-description
+  # PUT /api/v1/zapi/settings/:instance_id/profile-description
   def update_profile_description
 
     begin
@@ -149,7 +149,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
     end
   end
 
-  # PUT /api/v1/accounts/:account_id/zapi/settings/:instance_id/call-reject
+  # PUT /api/v1/zapi/settings/:instance_id/call-reject
   def update_call_reject
 
     begin
@@ -164,7 +164,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
     end
   end
 
-  # PUT /api/v1/accounts/:account_id/zapi/settings/:instance_id/call-reject-message
+  # PUT /api/v1/zapi/settings/:instance_id/call-reject-message
   def update_call_reject_message
 
     begin
@@ -179,7 +179,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
     end
   end
 
-  # POST /api/v1/accounts/:account_id/zapi/settings/:instance_id/restart
+  # POST /api/v1/zapi/settings/:instance_id/restart
   def restart
 
     begin
@@ -191,7 +191,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
     end
   end
 
-  # POST /api/v1/accounts/:account_id/zapi/settings/:instance_id/disconnect
+  # POST /api/v1/zapi/settings/:instance_id/disconnect
   def disconnect
 
     begin
@@ -354,7 +354,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
 
   # Privacy endpoints
 
-  # GET /api/v1/accounts/:account_id/zapi/settings/:instance_id/privacy_disallowed_contacts
+  # GET /api/v1/zapi/settings/:instance_id/privacy_disallowed_contacts
   def privacy_disallowed_contacts
     type = params[:type] || params[:privacy_type]
     return render json: { error: 'Missing type parameter' }, status: :bad_request if type.blank?
@@ -368,7 +368,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
     end
   end
 
-  # POST /api/v1/accounts/:account_id/zapi/settings/:instance_id/privacy_set_last_seen
+  # POST /api/v1/zapi/settings/:instance_id/privacy_set_last_seen
   def privacy_set_last_seen
     begin
       visualization_type = params[:visualization_type] || params[:visualizationType]
@@ -385,7 +385,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
     end
   end
 
-  # POST /api/v1/accounts/:account_id/zapi/settings/:instance_id/privacy_set_photo_visualization
+  # POST /api/v1/zapi/settings/:instance_id/privacy_set_photo_visualization
   def privacy_set_photo_visualization
     begin
       visualization_type = params[:visualization_type] || params[:visualizationType]
@@ -402,7 +402,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
     end
   end
 
-  # POST /api/v1/accounts/:account_id/zapi/settings/:instance_id/privacy_set_description
+  # POST /api/v1/zapi/settings/:instance_id/privacy_set_description
   def privacy_set_description
     begin
       visualization_type = params[:visualization_type] || params[:visualizationType]
@@ -419,7 +419,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
     end
   end
 
-  # POST /api/v1/accounts/:account_id/zapi/settings/:instance_id/privacy_set_group_add_permission
+  # POST /api/v1/zapi/settings/:instance_id/privacy_set_group_add_permission
   def privacy_set_group_add_permission
     begin
       visualization_type = params[:visualization_type] || params[:visualizationType]
@@ -436,7 +436,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
     end
   end
 
-  # POST /api/v1/accounts/:account_id/zapi/settings/:instance_id/privacy_set_online
+  # POST /api/v1/zapi/settings/:instance_id/privacy_set_online
   def privacy_set_online
     begin
       visualization_type = params[:visualization_type] || params[:visualizationType]
@@ -453,7 +453,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
     end
   end
 
-  # POST /api/v1/accounts/:account_id/zapi/settings/:instance_id/privacy_set_read_receipts
+  # POST /api/v1/zapi/settings/:instance_id/privacy_set_read_receipts
   def privacy_set_read_receipts
     begin
       visualization_type = params[:visualization_type] || params[:visualizationType]
@@ -470,7 +470,7 @@ class Api::V1::Accounts::Zapi::SettingsController < Api::V1::Accounts::BaseContr
     end
   end
 
-  # POST /api/v1/accounts/:account_id/zapi/settings/:instance_id/privacy_set_messages_duration
+  # POST /api/v1/zapi/settings/:instance_id/privacy_set_messages_duration
   def privacy_set_messages_duration
     begin
       duration = params[:duration] || params[:value]

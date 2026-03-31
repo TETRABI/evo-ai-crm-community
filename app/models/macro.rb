@@ -8,13 +8,8 @@
 #  visibility    :integer          default("personal")
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
-#  account_id    :uuid             not null
 #  created_by_id :uuid
 #  updated_by_id :uuid
-#
-# Indexes
-#
-#  index_macros_on_account_id  (account_id)
 #
 class Macro < ApplicationRecord
   include Rails.application.routes.url_helpers

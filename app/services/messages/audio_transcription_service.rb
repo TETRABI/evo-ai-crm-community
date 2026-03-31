@@ -16,13 +16,7 @@ class Messages::AudioTranscriptionService
     end
 
     unless transcription_enabled?
-      Rails.logger.warn "AudioTranscriptionService: Transcription not enabled for account #{account.id}"
-      Rails.logger.warn "AudioTranscriptionService: Account audio_transcriptions: #{account.audio_transcriptions.inspect}"
-      openai_hook = account.hooks.find_by(app_id: 'openai')
-      Rails.logger.warn "AudioTranscriptionService: OpenAI hook: #{openai_hook.inspect}"
-      if openai_hook
-        Rails.logger.warn "AudioTranscriptionService: Hook status: #{openai_hook.status}, enable_audio_transcription: #{openai_hook.settings&.[]('enable_audio_transcription')}, api_key present: #{openai_hook.settings&.[]('api_key').present?}"
-      end
+      Rails.logger.warn "AudioTranscriptionService: Transcription not enabled"
       return { error: 'Transcription not enabled' }
     end
 
@@ -105,20 +99,13 @@ class Messages::AudioTranscriptionService
       end
     end
 
-    # Priority 2: Check account-level setting (only if global config is not set)
-    return true if account.audio_transcriptions == true
-
-    # Priority 3: Check OpenAI integration setting (only if global config is not set)
-    openai_hook = account.hooks.find_by(app_id: 'openai')
+    # Priority 2: Check OpenAI integration hook settings
+    openai_hook = Hook.find_by(app_id: 'openai')
     return false unless openai_hook&.enabled?
     return false unless openai_hook.settings&.[]('enable_audio_transcription') == true
 
     # Check if OpenAI API key is configured
     openai_hook.settings&.[]('api_key').present?
-  end
-
-  def account
-    @account ||= attachment.account
   end
 
   def transcribe_audio
@@ -153,7 +140,7 @@ class Messages::AudioTranscriptionService
     end
 
     # Priority 2: Fallback to hook settings for backward compatibility
-    openai_hook = account.hooks.find_by(app_id: 'openai')
+    openai_hook = Hook.find_by(app_id: 'openai')
     unless openai_hook&.enabled?
       Rails.logger.warn "AudioTranscriptionService: OpenAI hook not found or not enabled"
       return nil
@@ -256,13 +243,13 @@ class Messages::AudioTranscriptionService
   end
 
   def detect_language
-    # Try to detect language from account locale
-    account_locale = account.locale
-    return 'pt' if account_locale&.start_with?('pt')
-    return 'es' if account_locale&.start_with?('es')
-    return 'fr' if account_locale&.start_with?('fr')
-    return 'de' if account_locale&.start_with?('de')
-    return 'it' if account_locale&.start_with?('it')
+    # Try to detect language from global locale config
+    locale = GlobalConfigService.load('DEFAULT_LOCALE', nil)
+    return 'pt' if locale&.start_with?('pt')
+    return 'es' if locale&.start_with?('es')
+    return 'fr' if locale&.start_with?('fr')
+    return 'de' if locale&.start_with?('de')
+    return 'it' if locale&.start_with?('it')
 
     # Default to auto-detect
     nil

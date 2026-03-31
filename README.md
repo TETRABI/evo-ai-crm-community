@@ -129,12 +129,6 @@ All scripts are available through `pnpm`:
 
 This application runs in **Rails API mode** - no frontend views. The frontend is developed separately.
 
-### Multi-Tenant
-
-- All operations are scoped by `account_id`
-- Complete data isolation between accounts
-- Account-based feature flags
-
 ### Service Objects
 
 Business logic is organized in Service Objects:

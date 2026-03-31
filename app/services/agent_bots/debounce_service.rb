@@ -141,8 +141,8 @@ class AgentBots::DebounceService
       },
       conversation_id: @conversation.id,
       account: {
-        id: Account.first&.id,
-        name: Account.first&.name
+        id: nil,
+        name: GlobalConfigService.load('BRAND_NAME', 'Evo CRM')
       },
       inbox: {
         id: @conversation.inbox.id,

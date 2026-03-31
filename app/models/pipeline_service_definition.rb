@@ -10,19 +10,16 @@
 #  name          :string(255)      not null
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
-#  account_id    :uuid             not null
 #  pipeline_id   :uuid             not null
 #
 # Indexes
 #
-#  index_pipeline_service_definitions_on_account_id             (account_id)
-#  index_pipeline_service_definitions_on_account_id_and_active  (account_id,active)
-#  index_pipeline_service_definitions_on_pipeline_and_name      (pipeline_id,name) UNIQUE
-#  index_pipeline_service_definitions_on_pipeline_id            (pipeline_id)
+#  index_pipeline_service_definitions_on_active             (active)
+#  index_pipeline_service_definitions_on_pipeline_and_name  (pipeline_id,name) UNIQUE
+#  index_pipeline_service_definitions_on_pipeline_id        (pipeline_id)
 #
 # Foreign Keys
 #
-#  fk_rails_...  (account_id => accounts.id)
 #  fk_rails_...  (pipeline_id => pipelines.id)
 #
 class PipelineServiceDefinition < ApplicationRecord

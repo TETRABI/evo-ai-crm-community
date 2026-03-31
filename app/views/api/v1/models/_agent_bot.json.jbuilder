@@ -13,6 +13,5 @@ json.debounce_time resource.debounce_time unless resource.system_bot?
 json.bot_type resource.bot_type
 json.bot_provider resource.bot_provider
 json.bot_config resource.bot_config
-json.account_id resource.account_id
 json.access_token resource.access_token if resource.access_token.present?
 json.system_bot resource.system_bot?

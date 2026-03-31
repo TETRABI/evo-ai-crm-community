@@ -31,8 +31,7 @@ class Integrations::App
     params[:fields]
   end
 
-  # There is no way to get the account_id from OAuth callbacks
-  # so we are using token generation to encode account_id in the state parameter
+  # Token generation is used to encode an identifier in the OAuth state parameter
   def encode_state
     case params[:id]
     when 'linear'

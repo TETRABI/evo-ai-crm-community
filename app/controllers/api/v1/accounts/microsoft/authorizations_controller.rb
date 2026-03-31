@@ -42,10 +42,10 @@ class Api::V1::Accounts::Microsoft::AuthorizationsController < Api::V1::Accounts
     end
 
     begin
-      # Verify state token to get account_id
-      account_id = verify_microsoft_token(state)
+      # Verify state token
+      identifier = verify_microsoft_token(state)
 
-      unless account_id
+      unless identifier
         render json: { success: false, error: 'Invalid or expired state token' }, status: :unauthorized
         return
       end

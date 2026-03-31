@@ -140,7 +140,7 @@ class Instagram::CallbacksController < ApplicationController
     end
   end
 
-  def account_id
+  def state_identifier
     return unless params[:state]
 
     verify_instagram_token(params[:state])

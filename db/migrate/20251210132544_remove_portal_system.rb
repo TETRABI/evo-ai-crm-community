@@ -29,7 +29,6 @@ class RemovePortalSystem < ActiveRecord::Migration[7.0]
   def down
     # Recreate portals table
     create_table :portals, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-      t.uuid "account_id", null: false
       t.string "name", null: false
       t.string "slug", null: false
       t.string "custom_domain"
@@ -48,7 +47,6 @@ class RemovePortalSystem < ActiveRecord::Migration[7.0]
 
     # Recreate categories table
     create_table :categories, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-      t.uuid "account_id", null: false
       t.uuid "portal_id", null: false
       t.string "name"
       t.text "description"
@@ -62,14 +60,12 @@ class RemovePortalSystem < ActiveRecord::Migration[7.0]
       t.datetime "updated_at", precision: nil, null: false
       t.index ["associated_category_id"], name: "index_categories_on_associated_category_id"
       t.index ["locale"], name: "index_categories_on_locale"
-      t.index ["locale", "account_id"], name: "index_categories_on_locale_and_account_id"
       t.index ["parent_category_id"], name: "index_categories_on_parent_category_id"
       t.index ["slug", "locale", "portal_id"], name: "index_categories_on_slug_and_locale_and_portal_id", unique: true
     end
 
     # Recreate folders table
     create_table :folders, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-      t.uuid "account_id", null: false
       t.uuid "category_id", null: false
       t.string "name"
       t.datetime "created_at", precision: nil, null: false
@@ -78,7 +74,6 @@ class RemovePortalSystem < ActiveRecord::Migration[7.0]
 
     # Recreate articles table
     create_table :articles, id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-      t.uuid "account_id", null: false
       t.uuid "portal_id", null: false
       t.uuid "category_id"
       t.uuid "folder_id"
@@ -95,7 +90,6 @@ class RemovePortalSystem < ActiveRecord::Migration[7.0]
       t.string "slug", null: false
       t.integer "position"
       t.string "locale", default: "en", null: false
-      t.index ["account_id"], name: "index_articles_on_account_id"
       t.index ["associated_article_id"], name: "index_articles_on_associated_article_id"
       t.index ["author_id"], name: "index_articles_on_author_id"
       t.index ["portal_id"], name: "index_articles_on_portal_id"

@@ -10,7 +10,7 @@ class Notification::EmailNotificationService
 
     # TODO : Clean up whatever happening over here
     # Segregate the mailers properly
-    AgentNotifications::ConversationNotificationsMailer.with(account: Account.first).public_send(notification
+    AgentNotifications::ConversationNotificationsMailer.with({}).public_send(notification
       .notification_type.to_s, notification.primary_actor, notification.user, notification.secondary_actor).deliver_later
   end
 

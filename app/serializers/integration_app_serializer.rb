@@ -14,7 +14,7 @@ module IntegrationAppSerializer
       description: app.description,
       logo: app.logo,
       enabled: app.enabled?(account),
-      hooks: IntegrationHookSerializer.serialize_collection(account.hooks.where(app_id: app.id)),
+      hooks: IntegrationHookSerializer.serialize_collection(Hook.where(app_id: app.id)),
       action: app.action,
       hook_type: app.params[:hook_type],
       allow_multiple_hooks: app.params[:allow_multiple_hooks],

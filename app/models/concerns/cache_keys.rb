@@ -35,8 +35,8 @@ module CacheKeys
 
   private
 
-  def update_cache_key_for_account(account_id, key)
-    prefixed_cache_key = get_prefixed_cache_key(account_id, key)
+  def update_cache_key_for_account(_id, key)
+    prefixed_cache_key = get_prefixed_cache_key(nil, key)
     timestamp = (Time.now.utc.to_f * 1000).to_i
     Redis::Alfred.setex(prefixed_cache_key, timestamp, CACHE_KEYS_EXPIRY)
   end

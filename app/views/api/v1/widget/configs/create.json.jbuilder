@@ -4,11 +4,10 @@ json.website_channel_config do
   json.auth_token @token
   json.avatar_url @web_widget.inbox.avatar_url
   json.csat_survey_enabled @web_widget.inbox.csat_survey_enabled
-  json.disable_branding(@web_widget.inbox.account.respond_to?(:feature_disable_branding?) ?
-                        @web_widget.inbox.account.feature_disable_branding? : false)
+  json.disable_branding false
   json.enabled_features @web_widget.selected_feature_flags
   json.enabled_languages available_locales_with_name
-  json.locale @web_widget.locale || @web_widget.account.locale
+  json.locale @web_widget.locale || ENV.fetch('DEFAULT_LOCALE', 'en')
   json.out_of_office_message @web_widget.inbox.out_of_office_message
   json.pre_chat_form_enabled @web_widget.pre_chat_form_enabled
   json.pre_chat_form_options @web_widget.pre_chat_form_options

@@ -8,7 +8,6 @@
 #  provider_config :jsonb
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
-#  account_id      :uuid             not null
 #
 # Indexes
 #

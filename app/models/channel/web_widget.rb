@@ -18,7 +18,6 @@
 #  widget_color          :string           default("#1f93ff")
 #  created_at            :datetime         not null
 #  updated_at            :datetime         not null
-#  account_id            :uuid
 #
 # Indexes
 #

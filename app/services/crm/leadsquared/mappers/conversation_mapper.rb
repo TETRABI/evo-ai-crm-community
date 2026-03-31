@@ -99,7 +99,7 @@ class Crm::Leadsquared::Mappers::ConversationMapper
   end
 
   def conversation_url
-    app_account_conversation_url(account_id: Account.first&.id, id: conversation.display_id)
+    "#{ENV.fetch('FRONTEND_URL', 'http://localhost:3000')}/app/conversations/#{conversation.display_id}"
   end
 
   def brand_name

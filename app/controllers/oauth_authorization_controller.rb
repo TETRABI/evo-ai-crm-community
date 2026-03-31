@@ -45,10 +45,8 @@ class OauthAuthorizationController < Doorkeeper::AuthorizationsController
         redirect_to "#{frontend_url}/login?returnUrl=#{encoded_return_url}" and return
       end
 
-      # Auto-bind MCP app to first available account for user
-      if existing_app.account_id.nil?
-        auto_bind_mcp_app_to_account(existing_app, current_resource_owner)
-      end
+      # Auto-bind MCP app (single-tenant, no account binding needed)
+      auto_bind_mcp_app_to_account(existing_app, current_resource_owner)
     end
   end
 
@@ -69,15 +67,13 @@ class OauthAuthorizationController < Doorkeeper::AuthorizationsController
 
   def setup_dynamic_application
     client_id = params[:client_id]
-    selected_account_id = params[:selected_account_id]
-
     Rails.logger.debug "🔍 OAuth Debug: client_id=#{client_id}, params=#{params.to_unsafe_h}" if Rails.env.development?
 
     return unless client_id
 
     # Verificar se é uma aplicação OAuth legítima (não dinâmica)
     existing_app = OauthApplication.find_by(uid: client_id)
-    Rails.logger.debug "🔍 OAuth Debug: existing_app=#{existing_app&.name}, rfc7591=#{existing_app&.rfc7591_registered?}, account_id=#{existing_app&.account_id}" if Rails.env.development?
+    Rails.logger.debug "🔍 OAuth Debug: existing_app=#{existing_app&.name}, rfc7591=#{existing_app&.rfc7591_registered?}" if Rails.env.development?
 
     if existing_app && !existing_app.rfc7591_registered?
       # Aplicação OAuth legítima - deixar Doorkeeper processar normalmente (não redirecionar)
@@ -85,9 +81,9 @@ class OauthAuthorizationController < Doorkeeper::AuthorizationsController
       return
     end
 
-    # Se é RFC7591 MAS já tem account_id, deixar Doorkeeper processar normalmente
-    if existing_app && existing_app.rfc7591_registered? && existing_app.account_id.present?
-      Rails.logger.debug "⏭️ RFC7591 App já vinculada à account #{existing_app.account_id} - deixando Doorkeeper processar" if Rails.env.development?
+    # Single-tenant: RFC7591 apps don't need account binding
+    if existing_app && existing_app.rfc7591_registered?
+      Rails.logger.debug "⏭️ RFC7591 App #{existing_app.name} - deixando Doorkeeper processar" if Rails.env.development?
       return
     end
 
@@ -103,28 +99,26 @@ class OauthAuthorizationController < Doorkeeper::AuthorizationsController
       return
     end
 
-    # Se tem account selecionada, processar vinculação
-    if selected_account_id.present?
+    # Process dynamic OAuth application creation
+    if params[:redirect_uri].present?
       redirect_uri = params[:redirect_uri]
 
-      # Verificar se é uma aplicação RFC 7591 que precisa ser vinculada
+      # Check if this is an RFC 7591 application
       existing_app = OauthApplication.find_by(uid: client_id)
       if existing_app&.rfc7591_registered?
-        success = bind_rfc7591_app_to_account(existing_app, selected_account_id.to_i, current_resource_owner)
+        success = bind_rfc7591_app_to_account(existing_app, nil, current_resource_owner)
         unless success
           render_dynamic_authorization_error
           return
         end
-        if Rails.env.development?
-          Rails.logger.debug "✅ RFC 7591: Bound app #{existing_app.name} to account=#{selected_account_id}"
-        end
+        Rails.logger.debug "✅ RFC 7591: App #{existing_app.name} ready" if Rails.env.development?
         return
       end
 
-      # Lógica original para OAuth dinâmico
+      # Dynamic OAuth application creation
       dynamic_app = DynamicOauthService.create_or_find_application_for_account(
         client_id,
-        selected_account_id.to_i,
+        nil,
         current_resource_owner,
         redirect_uri
       )
@@ -134,9 +128,7 @@ class OauthAuthorizationController < Doorkeeper::AuthorizationsController
         return
       end
 
-      if Rails.env.development?
-        Rails.logger.debug "✅ Dynamic OAuth: Created/found app #{dynamic_app.name} for client_id=#{client_id} in account=#{selected_account_id}"
-      end
+      Rails.logger.debug "✅ Dynamic OAuth: Created/found app #{dynamic_app.name} for client_id=#{client_id}" if Rails.env.development?
       return
     end
 
@@ -185,12 +177,10 @@ class OauthAuthorizationController < Doorkeeper::AuthorizationsController
     end
   end
 
-  def bind_rfc7591_app_to_account(application, _account_id, _current_user)
-    # Single-tenant: just bind the application (no account lookup needed)
-    application.update!(account_id: nil)
-
+  def bind_rfc7591_app_to_account(application, _deprecated = nil, _current_user = nil)
+    # Single-tenant: no account binding needed
     if Rails.env.development?
-      Rails.logger.debug "RFC 7591: Bound application #{application.name} (#{application.uid})"
+      Rails.logger.debug "RFC 7591: Application #{application.name} (#{application.uid}) ready"
     end
 
     true
@@ -215,10 +205,8 @@ class OauthAuthorizationController < Doorkeeper::AuthorizationsController
   end
 
   def auto_bind_mcp_app_to_account(application, user)
-    # Single-tenant: bind the MCP application directly
-    application.update!(account_id: nil)
-
-    Rails.logger.info "MCP Auto-bind: Bound #{application.name} for user #{user.email}"
+    # Single-tenant: no account binding needed
+    Rails.logger.info "MCP Auto-bind: Application #{application.name} ready for user #{user.email}"
     true
   rescue => e
     Rails.logger.error "MCP Auto-bind Error: #{e.message}"

@@ -4,18 +4,18 @@ class UserPolicy < ApplicationPolicy
   end
 
   def create?
-    @account_user.administrator?
+    @user.administrator?
   end
 
   def update?
-    @account_user.administrator?
+    @user.administrator?
   end
 
   def destroy?
-    @account_user.administrator?
+    @user.administrator?
   end
 
   def bulk_create?
-    @account_user.administrator?
+    @user.administrator?
   end
 end

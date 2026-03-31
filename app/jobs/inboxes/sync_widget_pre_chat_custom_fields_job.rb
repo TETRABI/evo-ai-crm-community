@@ -1,8 +1,7 @@
 class Inboxes::SyncWidgetPreChatCustomFieldsJob < ApplicationJob
   queue_as :default
 
-  def perform(account, field_name)
-    account_id = account.id
+  def perform(field_name)
     current_job_id = job_id
 
     processed_widgets = 0
@@ -11,10 +10,10 @@ class Inboxes::SyncWidgetPreChatCustomFieldsJob < ApplicationJob
     removed_fields = 0
 
     Rails.logger.info(
-      "[WidgetPreChatCustomFields][destroy] start job_id=#{current_job_id} account_id=#{account_id} field_name=#{field_name}"
+      "[WidgetPreChatCustomFields][destroy] start job_id=#{current_job_id} field_name=#{field_name}"
     )
 
-    account.web_widgets.where(pre_chat_form_enabled: true).find_each do |web_widget|
+    Channel::WebWidget.where(pre_chat_form_enabled: true).find_each do |web_widget|
       processed_widgets += 1
 
       pre_chat_options = (web_widget.pre_chat_form_options || {}).with_indifferent_access
@@ -37,19 +36,19 @@ class Inboxes::SyncWidgetPreChatCustomFieldsJob < ApplicationJob
       removed_fields += removed_count
 
       Rails.logger.info(
-        "[WidgetPreChatCustomFields][destroy] updated job_id=#{current_job_id} account_id=#{account_id} " \
+        "[WidgetPreChatCustomFields][destroy] updated job_id=#{current_job_id} " \
         "web_widget_id=#{web_widget.id} field_name=#{field_name} removed_fields=#{removed_count}"
       )
     end
 
     Rails.logger.info(
-      "[WidgetPreChatCustomFields][destroy] finish job_id=#{current_job_id} account_id=#{account_id} field_name=#{field_name} " \
+      "[WidgetPreChatCustomFields][destroy] finish job_id=#{current_job_id} field_name=#{field_name} " \
       "processed_widgets=#{processed_widgets} updated_widgets=#{updated_widgets} " \
       "skipped_widgets=#{skipped_widgets} removed_fields=#{removed_fields}"
     )
   rescue StandardError => e
     Rails.logger.error(
-      "[WidgetPreChatCustomFields][destroy] error job_id=#{current_job_id} account_id=#{account_id} field_name=#{field_name} " \
+      "[WidgetPreChatCustomFields][destroy] error job_id=#{current_job_id} field_name=#{field_name} " \
       "error_class=#{e.class} error_message=#{e.message}"
     )
     Rails.logger.error(e.backtrace.join("\n")) if e.backtrace

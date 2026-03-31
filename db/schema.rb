@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
+ActiveRecord::Schema[7.1].define(version: 9025_08_19_224901) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_stat_statements"
   enable_extension "pg_trgm"
@@ -34,87 +34,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.index ["issued_id"], name: "index_access_tokens_on_issued_id"
     t.index ["owner_type", "owner_id"], name: "index_access_tokens_on_owner_type_and_owner_id"
     t.index ["token"], name: "index_access_tokens_on_token", unique: true
-    t.check_constraint "owner_type::text <> 'Account'::text OR owner_type::text = 'Account'::text AND issued_id IS NOT NULL", name: "check_issued_id_for_account"
-  end
-
-  create_table "account_custom_role_permissions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_custom_role_id", null: false
-    t.uuid "account_id", null: false
-    t.string "permission_key", limit: 100, null: false
-    t.datetime "created_at", default: -> { "now()" }, null: false
-    t.datetime "updated_at", default: -> { "now()" }, null: false
-    t.index ["account_custom_role_id", "permission_key"], name: "index_custom_role_perms_unique", unique: true
-    t.index ["account_custom_role_id"], name: "idx_on_account_custom_role_id_27889e4f8e"
-    t.index ["account_id"], name: "index_account_custom_role_permissions_on_account_id"
-    t.index ["permission_key"], name: "index_account_custom_role_permissions_on_permission_key"
-  end
-
-  create_table "account_custom_role_resource_scopes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_custom_role_id", null: false
-    t.uuid "account_id", null: false
-    t.string "resource_type", limit: 100, null: false
-    t.uuid "resource_id", null: false
-    t.jsonb "actions", default: [], null: false
-    t.uuid "created_by_id"
-    t.datetime "created_at", default: -> { "now()" }, null: false
-    t.datetime "updated_at", default: -> { "now()" }, null: false
-    t.index ["account_custom_role_id", "account_id", "resource_type", "resource_id"], name: "index_custom_role_scopes_unique", unique: true
-    t.index ["account_custom_role_id"], name: "idx_on_account_custom_role_id_c3b27b7cb5"
-    t.index ["account_id"], name: "index_account_custom_role_resource_scopes_on_account_id"
-    t.index ["actions"], name: "index_account_custom_role_resource_scopes_on_actions", using: :gin
-    t.index ["resource_type", "resource_id"], name: "index_custom_role_scopes_on_resource"
-  end
-
-  create_table "account_custom_roles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
-    t.string "key", limit: 100, null: false
-    t.string "name", limit: 255, null: false
-    t.text "description"
-    t.boolean "is_active", default: true, null: false
-    t.uuid "created_by_id"
-    t.uuid "updated_by_id"
-    t.datetime "created_at", default: -> { "now()" }, null: false
-    t.datetime "updated_at", default: -> { "now()" }, null: false
-    t.index ["account_id", "is_active"], name: "index_custom_roles_on_account_and_active"
-    t.index ["account_id", "key"], name: "index_custom_roles_on_account_and_key", unique: true
-    t.index ["account_id", "name"], name: "index_custom_roles_on_account_and_name", unique: true
-    t.index ["account_id"], name: "index_account_custom_roles_on_account_id"
-  end
-
-  create_table "account_users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
-    t.uuid "user_id", null: false
-    t.uuid "role_id"
-    t.uuid "inviter_id"
-    t.datetime "active_at"
-    t.integer "availability", default: 0, null: false
-    t.boolean "auto_offline", default: true, null: false
-    t.datetime "created_at", default: -> { "now()" }, null: false
-    t.datetime "updated_at", default: -> { "now()" }, null: false
-    t.uuid "account_custom_role_id"
-    t.index ["account_custom_role_id"], name: "index_account_users_on_account_custom_role_id"
-    t.index ["account_id", "user_id"], name: "uniq_user_id_per_account_id", unique: true
-    t.index ["account_id"], name: "index_account_users_on_account_id"
-    t.index ["role_id"], name: "index_account_users_on_role_id"
-    t.index ["user_id"], name: "index_account_users_on_user_id"
-    t.check_constraint "NOT (role_id IS NOT NULL AND account_custom_role_id IS NOT NULL)", name: "check_not_both_roles"
-  end
-
-  create_table "accounts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "name", null: false
-    t.integer "locale", default: 0
-    t.string "domain", limit: 100
-    t.string "support_email", limit: 100
-    t.bigint "feature_flags", default: 0, null: false
-    t.integer "auto_resolve_duration"
-    t.jsonb "limits", default: {}
-    t.jsonb "custom_attributes", default: {}
-    t.jsonb "settings", default: {}
-    t.jsonb "internal_attributes", default: {}, null: false
-    t.integer "status", default: 0
-    t.datetime "created_at", default: -> { "now()" }, null: false
-    t.datetime "updated_at", default: -> { "now()" }, null: false
-    t.index ["status"], name: "index_accounts_on_status"
   end
 
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
@@ -160,7 +79,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.integer "status", default: 0
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.uuid "account_id"
     t.jsonb "allowed_conversation_statuses", default: [], null: false
     t.jsonb "allowed_label_ids", default: [], null: false
     t.boolean "facebook_comment_replies_enabled", default: false, null: false
@@ -192,7 +110,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.string "outgoing_url"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.uuid "account_id"
     t.integer "bot_type", default: 0
     t.jsonb "bot_config", default: {}
     t.string "api_key"
@@ -203,7 +120,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.integer "text_segmentation_min_size", default: 50
     t.decimal "delay_per_character", precision: 8, scale: 2, default: "50.0"
     t.integer "debounce_time", default: 5, null: false
-    t.index ["account_id"], name: "index_agent_bots_on_account_id"
   end
 
   create_table "alembic_version", primary_key: "version_num", id: { type: :string, limit: 32 }, force: :cascade do |t|
@@ -219,7 +135,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.string "external_url"
     t.float "coordinates_lat", default: 0.0
     t.float "coordinates_long", default: 0.0
-    t.uuid "account_id", null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.string "fallback_title"
@@ -227,12 +142,10 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.jsonb "meta", default: {}
     t.string "attachable_type"
     t.uuid "attachable_id"
-    t.index ["account_id"], name: "index_attachments_on_account_id"
     t.index ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id"
   end
 
   create_table "automation_rules", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.string "name", null: false
     t.text "description"
     t.string "event_name", null: false
@@ -243,13 +156,11 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.boolean "active", default: true, null: false
     t.string "mode", default: "simple", null: false
     t.jsonb "flow_data"
-    t.index ["account_id"], name: "index_automation_rules_on_account_id"
     t.index ["flow_data"], name: "index_automation_rules_on_flow_data", using: :gin
     t.index ["mode"], name: "index_automation_rules_on_mode"
   end
 
   create_table "canned_responses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.string "short_code"
     t.text "content"
     t.datetime "created_at", precision: nil, null: false
@@ -257,7 +168,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
   end
 
   create_table "channel_api", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.string "webhook_url"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
@@ -270,7 +180,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
   end
 
   create_table "channel_email", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.string "email", null: false
     t.string "forward_to_email", null: false
     t.datetime "created_at", precision: nil, null: false
@@ -302,18 +211,15 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.string "page_id", null: false
     t.string "user_access_token", null: false
     t.string "page_access_token", null: false
-    t.uuid "account_id", null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.string "instagram_id"
-    t.index ["page_id", "account_id"], name: "index_channel_facebook_pages_on_page_id_and_account_id", unique: true
-    t.index ["page_id"], name: "index_channel_facebook_pages_on_page_id"
+    t.index ["page_id"], name: "index_channel_facebook_pages_on_page_id", unique: true
   end
 
   create_table "channel_instagram", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "access_token", null: false
     t.datetime "expires_at", precision: nil, null: false
-    t.uuid "account_id", null: false
     t.string "instagram_id", null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
@@ -321,7 +227,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
   end
 
   create_table "channel_line", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.string "line_channel_id", null: false
     t.string "line_channel_secret", null: false
     t.string "line_channel_token", null: false
@@ -331,7 +236,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
   end
 
   create_table "channel_sms", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.string "phone_number", null: false
     t.string "provider", default: "default"
     t.jsonb "provider_config", default: {}
@@ -342,7 +246,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
 
   create_table "channel_telegram", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "bot_name"
-    t.uuid "account_id", null: false
     t.string "bot_token", null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
@@ -353,7 +256,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.string "phone_number"
     t.string "auth_token", null: false
     t.string "account_sid", null: false
-    t.uuid "account_id", null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.integer "medium", default: 0
@@ -368,16 +270,14 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.string "profile_id", null: false
     t.string "twitter_access_token", null: false
     t.string "twitter_access_token_secret", null: false
-    t.uuid "account_id", null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.boolean "tweets_enabled", default: true
-    t.index ["account_id", "profile_id"], name: "index_channel_twitter_profiles_on_account_id_and_profile_id", unique: true
+    t.index ["profile_id"], name: "index_channel_twitter_profiles_on_profile_id", unique: true
   end
 
   create_table "channel_web_widgets", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "website_url"
-    t.uuid "account_id"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.string "website_token"
@@ -397,25 +297,21 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
   end
 
   create_table "channel_whatsapp", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.string "phone_number", null: false
     t.string "provider", default: "default"
     t.jsonb "provider_config", default: {}
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.jsonb "provider_connection", default: {}
-    t.index ["account_id", "phone_number"], name: "index_channel_whatsapp_on_account_id_and_phone_number", unique: true
+    t.index ["phone_number"], name: "index_channel_whatsapp_on_phone_number", unique: true
   end
 
   create_table "contact_companies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "contact_id", null: false
     t.uuid "company_id", null: false
-    t.uuid "account_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
-    t.index ["account_id", "company_id"], name: "index_contact_companies_on_account_id_and_company_id"
-    t.index ["account_id", "contact_id"], name: "index_contact_companies_on_account_id_and_contact_id"
     t.index ["company_id", "contact_id"], name: "index_contact_companies_on_company_id_and_contact_id"
     t.index ["contact_id", "company_id"], name: "index_contact_companies_on_contact_id_and_company_id", unique: true
     t.index ["deleted_at"], name: "index_contact_companies_on_deleted_at"
@@ -440,7 +336,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.string "name", default: ""
     t.string "email"
     t.string "phone_number"
-    t.uuid "account_id", null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.jsonb "additional_attributes", default: {}
@@ -457,35 +352,27 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.string "tax_id", limit: 14
     t.string "website"
     t.string "industry"
-    t.index "lower((email)::text), account_id", name: "index_contacts_on_lower_email_account_id"
-    t.index ["account_id", "email", "phone_number", "identifier"], name: "index_contacts_on_nonempty_fields", where: "(((email)::text <> ''::text) OR ((phone_number)::text <> ''::text) OR ((identifier)::text <> ''::text))"
-    t.index ["account_id", "last_activity_at"], name: "index_contacts_on_account_id_and_last_activity_at", order: { last_activity_at: "DESC NULLS LAST" }
-    t.index ["account_id", "type"], name: "index_contacts_on_account_id_and_type"
-    t.index ["account_id"], name: "index_contacts_on_account_id"
-    t.index ["account_id"], name: "index_resolved_contact_account_id", where: "(((email)::text <> ''::text) OR ((phone_number)::text <> ''::text) OR ((identifier)::text <> ''::text))"
     t.index ["blocked"], name: "index_contacts_on_blocked"
-    t.index ["email", "account_id"], name: "uniq_email_per_account_contact", unique: true
-    t.index ["identifier", "account_id"], name: "uniq_identifier_per_account_contact", unique: true
+    t.index ["email"], name: "uniq_email_per_account_contact", unique: true
+    t.index ["identifier"], name: "uniq_identifier_per_account_contact", unique: true
+    t.index ["last_activity_at"], name: "index_contacts_on_last_activity_at", order: "DESC NULLS LAST"
     t.index ["name", "email", "phone_number", "identifier"], name: "index_contacts_on_name_email_phone_number_identifier", opclass: :gin_trgm_ops, using: :gin
-    t.index ["phone_number", "account_id"], name: "index_contacts_on_phone_number_and_account_id"
-    t.index ["tax_id", "account_id"], name: "index_contacts_on_tax_id_and_account_id", unique: true, where: "(tax_id IS NOT NULL)"
+    t.index ["phone_number"], name: "index_contacts_on_phone_number"
+    t.index ["tax_id"], name: "index_contacts_on_tax_id", unique: true, where: "(tax_id IS NOT NULL)"
     t.index ["type"], name: "index_contacts_on_type"
   end
 
   create_table "conversation_participants", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.uuid "user_id", null: false
     t.uuid "conversation_id", null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.index ["account_id"], name: "index_conversation_participants_on_account_id"
     t.index ["conversation_id"], name: "index_conversation_participants_on_conversation_id"
     t.index ["user_id", "conversation_id"], name: "index_conversation_participants_on_user_id_and_conversation_id", unique: true
     t.index ["user_id"], name: "index_conversation_participants_on_user_id"
   end
 
   create_table "conversations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.uuid "inbox_id", null: false
     t.integer "status", default: 0, null: false
     t.uuid "assignee_id"
@@ -508,28 +395,25 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.integer "priority"
     t.datetime "waiting_since", precision: nil
     t.text "cached_label_list"
-    t.index ["account_id", "assignee_id", "status", "last_activity_at"], name: "index_conversations_on_account_assignee_status_last_activity", order: { last_activity_at: "DESC NULLS LAST" }
-    t.index ["account_id", "display_id"], name: "index_conversations_on_account_id_and_display_id", unique: true
-    t.index ["account_id", "id"], name: "index_conversations_on_id_and_account_id"
-    t.index ["account_id", "inbox_id", "status", "assignee_id"], name: "conv_acid_inbid_stat_asgnid_idx"
-    t.index ["account_id", "status", "last_activity_at"], name: "index_conversations_on_account_status_last_activity", order: { last_activity_at: "DESC NULLS LAST" }
-    t.index ["account_id"], name: "index_conversations_on_account_id"
-    t.index ["assignee_id", "account_id"], name: "index_conversations_on_assignee_id_and_account_id"
+    t.index ["assignee_id", "status", "last_activity_at"], name: "index_conversations_on_assignee_status_last_activity", order: { last_activity_at: "DESC NULLS LAST" }
+    t.index ["assignee_id"], name: "index_conversations_on_assignee_id"
     t.index ["contact_id"], name: "index_conversations_on_contact_id"
     t.index ["contact_inbox_id"], name: "index_conversations_on_contact_inbox_id"
+    t.index ["display_id"], name: "index_conversations_on_display_id", unique: true
     t.index ["first_reply_created_at"], name: "index_conversations_on_first_reply_created_at"
+    t.index ["inbox_id", "status", "assignee_id"], name: "conv_inbid_stat_asgnid_idx"
     t.index ["inbox_id", "status", "last_activity_at"], name: "index_conversations_on_inbox_status_last_activity", order: { last_activity_at: "DESC NULLS LAST" }
     t.index ["inbox_id"], name: "index_conversations_on_inbox_id"
     t.index ["priority"], name: "index_conversations_on_priority"
-    t.index ["status", "account_id"], name: "index_conversations_on_status_and_account_id"
+    t.index ["status", "last_activity_at"], name: "index_conversations_on_status_last_activity", order: { last_activity_at: "DESC NULLS LAST" }
     t.index ["status", "priority"], name: "index_conversations_on_status_and_priority"
+    t.index ["status"], name: "index_conversations_on_status"
     t.index ["team_id"], name: "index_conversations_on_team_id"
     t.index ["uuid"], name: "index_conversations_on_uuid", unique: true
     t.index ["waiting_since"], name: "index_conversations_on_waiting_since"
   end
 
   create_table "csat_survey_responses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.uuid "conversation_id", null: false
     t.uuid "message_id", null: false
     t.integer "rating", null: false
@@ -538,7 +422,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.uuid "assigned_agent_id"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.index ["account_id"], name: "index_csat_survey_responses_on_account_id"
     t.index ["assigned_agent_id"], name: "index_csat_survey_responses_on_assigned_agent_id"
     t.index ["contact_id"], name: "index_csat_survey_responses_on_contact_id"
     t.index ["conversation_id"], name: "index_csat_survey_responses_on_conversation_id"
@@ -551,45 +434,38 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.integer "attribute_display_type", default: 0
     t.integer "default_value"
     t.integer "attribute_model", default: 0
-    t.uuid "account_id"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.text "attribute_description"
     t.jsonb "attribute_values", default: []
     t.string "regex_pattern"
     t.string "regex_cue"
-    t.index ["account_id"], name: "index_custom_attribute_definitions_on_account_id"
-    t.index ["attribute_key", "attribute_model", "account_id"], name: "attribute_key_model_index", unique: true
+    t.index ["attribute_key", "attribute_model"], name: "attribute_key_model_index", unique: true
   end
 
   create_table "custom_filters", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.integer "filter_type", default: 0, null: false
     t.jsonb "query", default: "{}", null: false
-    t.uuid "account_id", null: false
     t.uuid "user_id", null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.index ["account_id"], name: "index_custom_filters_on_account_id"
     t.index ["user_id"], name: "index_custom_filters_on_user_id"
   end
 
   create_table "dashboard_apps", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "title", null: false
     t.jsonb "content", default: []
-    t.uuid "account_id", null: false
     t.uuid "user_id"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.string "display_type", default: "conversation"
     t.string "sidebar_menu", default: "conversations"
     t.string "sidebar_position", default: "after"
-    t.index ["account_id"], name: "index_dashboard_apps_on_account_id"
     t.index ["user_id"], name: "index_dashboard_apps_on_user_id"
   end
 
   create_table "data_imports", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.string "data_type", null: false
     t.integer "status", default: 0, null: false
     t.text "processing_errors"
@@ -597,7 +473,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.integer "processed_records"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.index ["account_id"], name: "index_data_imports_on_account_id"
   end
 
   create_table "data_privacy_consents", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -633,13 +508,11 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.text "rejection_reason"
     t.uuid "moderated_by_id"
     t.datetime "moderated_at"
-    t.uuid "account_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "sentiment_offensive", default: false, null: false
     t.float "sentiment_confidence", default: 0.0, null: false
     t.text "sentiment_reason"
-    t.index ["account_id"], name: "index_facebook_comment_moderations_on_account_id"
     t.index ["comment_id"], name: "index_facebook_comment_moderations_on_comment_id"
     t.index ["conversation_id"], name: "index_facebook_comment_moderations_on_conversation_id"
     t.index ["message_id"], name: "index_facebook_comment_moderations_on_message_id"
@@ -676,7 +549,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
 
   create_table "inboxes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "channel_id", null: false
-    t.uuid "account_id", null: false
     t.string "name", null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
@@ -698,7 +570,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.string "business_name"
     t.string "display_name"
     t.string "default_conversation_status"
-    t.index ["account_id"], name: "index_inboxes_on_account_id"
     t.index ["channel_id", "channel_type"], name: "index_inboxes_on_channel_id_and_channel_type"
     t.index ["default_conversation_status"], name: "index_inboxes_on_default_conversation_status"
   end
@@ -716,7 +587,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
   create_table "integrations_hooks", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.integer "status", default: 1
     t.uuid "inbox_id"
-    t.uuid "account_id"
     t.string "app_id"
     t.integer "hook_type", default: 0
     t.string "reference_id"
@@ -731,15 +601,12 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.text "description"
     t.string "color", default: "#1f93ff", null: false
     t.boolean "show_on_sidebar"
-    t.uuid "account_id"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.index ["account_id"], name: "index_labels_on_account_id"
-    t.index ["title", "account_id"], name: "index_labels_on_title_and_account_id", unique: true
+    t.index ["title"], name: "index_labels_on_title", unique: true
   end
 
   create_table "macros", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.string "name", null: false
     t.integer "visibility", default: 0
     t.uuid "created_by_id"
@@ -747,17 +614,14 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.jsonb "actions", default: {}, null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.index ["account_id"], name: "index_macros_on_account_id"
   end
 
   create_table "mentions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "user_id", null: false
     t.uuid "conversation_id", null: false
-    t.uuid "account_id", null: false
     t.datetime "mentioned_at", precision: nil, null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.index ["account_id"], name: "index_mentions_on_account_id"
     t.index ["conversation_id"], name: "index_mentions_on_conversation_id"
     t.index ["user_id", "conversation_id"], name: "index_mentions_on_user_id_and_conversation_id", unique: true
     t.index ["user_id"], name: "index_mentions_on_user_id"
@@ -790,7 +654,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
 
   create_table "messages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.text "content"
-    t.uuid "account_id", null: false
     t.uuid "inbox_id", null: false
     t.uuid "conversation_id", null: false
     t.integer "message_type", null: false
@@ -808,13 +671,12 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.text "processed_message_content"
     t.float "sentiment_score", default: 0.0
     t.integer "sentiment", default: 0, null: false
-    t.index ["account_id", "created_at"], name: "index_messages_on_account_id_and_created_at"
-    t.index ["account_id", "inbox_id", "content_type", "created_at"], name: "index_messages_for_type_date_account_inbox"
-    t.index ["account_id"], name: "index_messages_on_account_id"
     t.index ["content"], name: "index_messages_on_content", opclass: :gin_trgm_ops, using: :gin
     t.index ["conversation_id", "created_at"], name: "idx_messages_conv_created_desc", order: { created_at: :desc }
     t.index ["conversation_id", "created_at"], name: "idx_messages_conv_created_incoming_desc", order: { created_at: :desc }, where: "(message_type = 0)"
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
+    t.index ["created_at"], name: "index_messages_on_created_at"
+    t.index ["inbox_id", "content_type", "created_at"], name: "index_messages_for_type_date_inbox"
     t.index ["inbox_id"], name: "index_messages_on_inbox_id"
     t.index ["sender_type", "sender_id"], name: "index_messages_on_sender_type_and_sender_id"
     t.index ["source_id"], name: "index_messages_on_source_id"
@@ -822,24 +684,21 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
 
   create_table "notes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.text "content", null: false
-    t.uuid "account_id", null: false
     t.uuid "contact_id", null: false
     t.uuid "user_id"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.index ["account_id"], name: "index_notes_on_account_id"
     t.index ["contact_id"], name: "index_notes_on_contact_id"
     t.index ["user_id"], name: "index_notes_on_user_id"
   end
 
   create_table "notification_settings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id"
     t.uuid "user_id"
     t.integer "email_flags", default: 0, null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.integer "push_flags", default: 0, null: false
-    t.index ["account_id", "user_id"], name: "by_account_user", unique: true
+    t.index ["user_id"], name: "by_user", unique: true
   end
 
   create_table "notification_subscriptions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -854,7 +713,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
   end
 
   create_table "notifications", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.uuid "user_id", null: false
     t.integer "notification_type", null: false
     t.string "primary_actor_type", null: false
@@ -867,7 +725,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.datetime "snoozed_until", precision: nil
     t.jsonb "meta", default: {}
     t.datetime "last_activity_at", precision: nil
-    t.index ["account_id"], name: "index_notifications_on_account_id"
     t.index ["primary_actor_type", "primary_actor_id"], name: "uniq_primary_actor_per_account_notifications"
     t.index ["secondary_actor_type", "secondary_actor_id"], name: "uniq_secondary_actor_per_account_notifications"
     t.index ["user_id"], name: "index_notifications_on_user_id"
@@ -911,10 +768,8 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.string "scopes", default: "", null: false
     t.boolean "confidential", default: true, null: false
     t.boolean "trusted", default: false, null: false
-    t.uuid "account_id"
     t.datetime "created_at", default: -> { "now()" }, null: false
     t.datetime "updated_at", default: -> { "now()" }, null: false
-    t.index ["account_id"], name: "index_oauth_applications_on_account_id"
     t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
   end
 
@@ -939,7 +794,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
 
   create_table "pipeline_service_definitions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "pipeline_id", null: false
-    t.uuid "account_id", null: false
     t.string "name", limit: 255, null: false
     t.decimal "default_value", precision: 10, scale: 2, default: "0.0", null: false
     t.string "currency", limit: 3, default: "BRL"
@@ -947,8 +801,7 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["account_id", "active"], name: "index_pipeline_service_definitions_on_account_id_and_active"
-    t.index ["account_id"], name: "index_pipeline_service_definitions_on_account_id"
+    t.index ["active"], name: "index_pipeline_service_definitions_on_active"
     t.index ["pipeline_id", "name"], name: "index_pipeline_service_definitions_on_pipeline_and_name", unique: true
     t.index ["pipeline_id"], name: "index_pipeline_service_definitions_on_pipeline_id"
   end
@@ -970,7 +823,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
 
   create_table "pipeline_tasks", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "pipeline_item_id", null: false
-    t.uuid "account_id", null: false
     t.uuid "created_by_id", null: false
     t.uuid "assigned_to_id"
     t.string "title", limit: 255, null: false
@@ -986,12 +838,10 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.uuid "parent_task_id"
     t.integer "position", default: 0, null: false
     t.integer "depth", default: 0, null: false
-    t.index ["account_id", "due_date"], name: "index_pipeline_tasks_on_account_id_and_due_date"
-    t.index ["account_id", "parent_task_id"], name: "index_pipeline_tasks_on_account_id_and_parent_task_id"
-    t.index ["account_id"], name: "index_pipeline_tasks_on_account_id"
     t.index ["assigned_to_id", "status", "due_date"], name: "index_pipeline_tasks_on_assigned_to_id_and_status_and_due_date"
     t.index ["assigned_to_id"], name: "index_pipeline_tasks_on_assigned_to_id"
     t.index ["created_by_id"], name: "index_pipeline_tasks_on_created_by_id"
+    t.index ["due_date"], name: "index_pipeline_tasks_on_due_date"
     t.index ["parent_task_id", "position"], name: "index_pipeline_tasks_on_parent_task_id_and_position"
     t.index ["parent_task_id"], name: "index_pipeline_tasks_on_parent_task_id"
     t.index ["pipeline_item_id", "parent_task_id"], name: "index_pipeline_tasks_on_pipeline_item_id_and_parent_task_id"
@@ -1001,7 +851,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
   end
 
   create_table "pipelines", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.uuid "created_by_id", null: false
     t.string "name", null: false
     t.text "description"
@@ -1013,17 +862,15 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.datetime "updated_at", precision: nil, null: false
     t.jsonb "custom_fields", default: {}, null: false
     t.boolean "is_default", default: false, null: false
-    t.index ["account_id", "is_default"], name: "index_pipelines_on_account_id_and_is_default_unique", where: "(is_default = true)"
-    t.index ["account_id", "name"], name: "index_pipelines_on_account_id_and_name", unique: true
-    t.index ["account_id"], name: "index_pipelines_on_account_id"
     t.index ["created_by_id"], name: "index_pipelines_on_created_by_id"
     t.index ["custom_fields"], name: "index_pipelines_on_custom_fields", using: :gin
+    t.index ["is_default"], name: "index_pipelines_on_is_default_unique", where: "(is_default = true)"
+    t.index ["name"], name: "index_pipelines_on_name", unique: true
   end
 
   create_table "reporting_events", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name"
     t.float "value"
-    t.uuid "account_id"
     t.uuid "inbox_id"
     t.uuid "user_id"
     t.uuid "conversation_id"
@@ -1032,7 +879,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.float "value_in_business_hours"
     t.datetime "event_start_time", precision: nil
     t.datetime "event_end_time", precision: nil
-    t.index ["account_id"], name: "index_reporting_events_on_account_id"
     t.index ["conversation_id"], name: "index_reporting_events_on_conversation_id"
     t.index ["created_at"], name: "index_reporting_events_on_created_at"
     t.index ["inbox_id"], name: "index_reporting_events_on_inbox_id"
@@ -1074,7 +920,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
 
   create_table "scheduled_action_execution_logs", force: :cascade do |t|
     t.bigint "scheduled_action_id", null: false
-    t.uuid "account_id", null: false
     t.string "status", limit: 50, default: "completed", null: false
     t.text "result_message"
     t.jsonb "error_details", default: {}
@@ -1083,7 +928,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.text "execution_log"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["account_id", "created_at"], name: "idx_exec_logs_account_created"
     t.index ["created_at"], name: "index_scheduled_action_execution_logs_on_created_at"
     t.index ["scheduled_action_id", "created_at"], name: "idx_exec_logs_action_created"
     t.index ["scheduled_action_id"], name: "index_scheduled_action_execution_logs_on_scheduled_action_id"
@@ -1091,7 +935,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
   end
 
   create_table "scheduled_action_notifications", force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.bigint "scheduled_action_id", null: false
     t.uuid "user_id", null: false
     t.string "notification_type", limit: 20, null: false
@@ -1100,7 +943,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.text "error_details"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["account_id"], name: "index_scheduled_action_notifications_on_account_id"
     t.index ["notification_type"], name: "index_scheduled_action_notifications_on_notification_type"
     t.index ["scheduled_action_id", "notification_type"], name: "idx_notifications_action_type"
     t.index ["scheduled_action_id"], name: "index_scheduled_action_notifications_on_scheduled_action_id"
@@ -1110,7 +952,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
   end
 
   create_table "scheduled_action_templates", force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.string "name", null: false
     t.text "description"
     t.string "action_type", limit: 50, null: false
@@ -1121,14 +962,12 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.uuid "created_by", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["account_id", "is_default"], name: "idx_templates_account_default"
-    t.index ["account_id", "is_public"], name: "idx_templates_account_public"
-    t.index ["account_id"], name: "index_scheduled_action_templates_on_account_id"
     t.index ["action_type"], name: "index_scheduled_action_templates_on_action_type"
+    t.index ["is_default"], name: "idx_templates_default"
+    t.index ["is_public"], name: "idx_templates_public"
   end
 
   create_table "scheduled_actions", force: :cascade do |t|
-    t.uuid "account_id", null: false
     t.bigint "deal_id"
     t.uuid "contact_id"
     t.uuid "conversation_id"
@@ -1148,8 +987,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.datetime "updated_at", null: false
     t.uuid "notify_user_id"
     t.datetime "notification_sent_at"
-    t.index ["account_id", "status", "scheduled_for"], name: "idx_scheduled_actions_account_status_time"
-    t.index ["account_id"], name: "index_scheduled_actions_on_account_id"
     t.index ["action_type"], name: "index_scheduled_actions_on_action_type"
     t.index ["contact_id", "status"], name: "idx_scheduled_actions_contact_status"
     t.index ["contact_id"], name: "index_scheduled_actions_on_contact_id"
@@ -1158,6 +995,7 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.index ["deal_id"], name: "index_scheduled_actions_on_deal_id"
     t.index ["notify_user_id"], name: "index_scheduled_actions_on_notify_user_id"
     t.index ["scheduled_for"], name: "index_scheduled_actions_on_scheduled_for"
+    t.index ["status", "scheduled_for"], name: "idx_scheduled_actions_status_time"
     t.index ["status"], name: "index_scheduled_actions_on_status"
   end
 
@@ -1212,17 +1050,14 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.string "name", null: false
     t.text "description"
     t.boolean "allow_auto_assign", default: true
-    t.uuid "account_id", null: false
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
-    t.index ["account_id"], name: "index_teams_on_account_id"
-    t.index ["name", "account_id"], name: "index_teams_on_name_and_account_id", unique: true
+    t.index ["name"], name: "index_teams_on_name", unique: true
   end
 
   create_table "telegram_bots", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name"
     t.string "auth_key"
-    t.uuid "account_id"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
   end
@@ -1290,7 +1125,6 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
   end
 
   create_table "webhooks", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.uuid "account_id"
     t.uuid "inbox_id"
     t.string "url"
     t.datetime "created_at", precision: nil, null: false
@@ -1298,12 +1132,11 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.integer "webhook_type", default: 0
     t.jsonb "subscriptions", default: ["conversation_status_changed", "conversation_updated", "conversation_created", "contact_created", "contact_updated", "message_created", "message_updated", "webwidget_triggered"]
     t.string "name"
-    t.index ["account_id", "url"], name: "index_webhooks_on_account_id_and_url", unique: true
+    t.index ["url"], name: "index_webhooks_on_url", unique: true
   end
 
   create_table "working_hours", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "inbox_id"
-    t.uuid "account_id"
     t.integer "day_of_week", null: false
     t.boolean "closed_all_day", default: false
     t.integer "open_hour"
@@ -1313,57 +1146,35 @@ ActiveRecord::Schema[7.1].define(version: 9025_08_19_224903) do
     t.datetime "created_at", precision: nil, null: false
     t.datetime "updated_at", precision: nil, null: false
     t.boolean "open_all_day", default: false
-    t.index ["account_id"], name: "index_working_hours_on_account_id"
     t.index ["inbox_id"], name: "index_working_hours_on_inbox_id"
   end
 
   add_foreign_key "access_tokens", "users", column: "issued_id"
-  add_foreign_key "account_custom_role_permissions", "account_custom_roles", on_delete: :cascade
-  add_foreign_key "account_custom_role_permissions", "accounts", on_delete: :cascade
-  add_foreign_key "account_custom_role_resource_scopes", "account_custom_roles", on_delete: :cascade
-  add_foreign_key "account_custom_role_resource_scopes", "accounts", on_delete: :cascade
-  add_foreign_key "account_custom_role_resource_scopes", "users", column: "created_by_id", on_delete: :nullify
-  add_foreign_key "account_custom_roles", "accounts", on_delete: :cascade
-  add_foreign_key "account_custom_roles", "users", column: "created_by_id", on_delete: :nullify
-  add_foreign_key "account_custom_roles", "users", column: "updated_by_id", on_delete: :nullify
-  add_foreign_key "account_users", "account_custom_roles", on_delete: :nullify
-  add_foreign_key "account_users", "accounts"
-  add_foreign_key "account_users", "roles"
-  add_foreign_key "account_users", "users"
-  add_foreign_key "account_users", "users", column: "inviter_id"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "agent_bot_inboxes", "agent_bots", column: "facebook_comment_agent_bot_id", on_delete: :nullify
-  add_foreign_key "contact_companies", "accounts"
   add_foreign_key "contact_companies", "contacts"
   add_foreign_key "contact_companies", "contacts", column: "company_id"
   add_foreign_key "data_privacy_consents", "users"
-  add_foreign_key "facebook_comment_moderations", "accounts"
   add_foreign_key "facebook_comment_moderations", "conversations"
   add_foreign_key "facebook_comment_moderations", "messages"
   add_foreign_key "facebook_comment_moderations", "users", column: "moderated_by_id"
   add_foreign_key "oauth_access_grants", "oauth_applications", column: "application_id"
   add_foreign_key "oauth_access_tokens", "oauth_applications", column: "application_id"
-  add_foreign_key "oauth_applications", "accounts"
   add_foreign_key "pipeline_items", "contacts"
   add_foreign_key "pipeline_items", "conversations"
   add_foreign_key "pipeline_items", "pipeline_stages"
   add_foreign_key "pipeline_items", "pipelines"
-  add_foreign_key "pipeline_service_definitions", "accounts"
   add_foreign_key "pipeline_service_definitions", "pipelines"
-  add_foreign_key "pipeline_tasks", "accounts"
   add_foreign_key "pipeline_tasks", "pipeline_items"
   add_foreign_key "pipeline_tasks", "pipeline_tasks", column: "parent_task_id"
   add_foreign_key "pipeline_tasks", "users", column: "assigned_to_id"
   add_foreign_key "pipeline_tasks", "users", column: "created_by_id"
   add_foreign_key "role_permissions_actions", "roles"
   add_foreign_key "scheduled_action_execution_logs", "scheduled_actions"
-  add_foreign_key "scheduled_action_notifications", "accounts", on_delete: :cascade
   add_foreign_key "scheduled_action_notifications", "scheduled_actions", on_delete: :cascade
   add_foreign_key "scheduled_action_notifications", "users", on_delete: :cascade
-  add_foreign_key "scheduled_action_templates", "accounts", on_delete: :cascade
   add_foreign_key "scheduled_action_templates", "users", column: "created_by", on_delete: :cascade
-  add_foreign_key "scheduled_actions", "accounts", on_delete: :cascade
   add_foreign_key "scheduled_actions", "contacts", on_delete: :cascade
   add_foreign_key "scheduled_actions", "conversations", on_delete: :cascade
   add_foreign_key "scheduled_actions", "users", column: "created_by", on_delete: :cascade

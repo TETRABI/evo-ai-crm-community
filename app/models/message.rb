@@ -17,7 +17,6 @@
 #  status                    :integer          default("sent")
 #  created_at                :datetime         not null
 #  updated_at                :datetime         not null
-#  account_id                :uuid             not null
 #  conversation_id           :uuid             not null
 #  inbox_id                  :uuid             not null
 #  sender_id                 :uuid
@@ -27,11 +26,10 @@
 #
 #  idx_messages_conv_created_desc               (conversation_id,created_at DESC)
 #  idx_messages_conv_created_incoming_desc      (conversation_id,created_at DESC) WHERE (message_type = 0)
-#  index_messages_for_type_date_account_inbox   (account_id,inbox_id,content_type,created_at)
-#  index_messages_on_account_id                 (account_id)
-#  index_messages_on_account_id_and_created_at  (account_id,created_at)
+#  index_messages_for_type_date_inbox           (inbox_id,content_type,created_at)
 #  index_messages_on_content                    (content) USING gin
 #  index_messages_on_conversation_id            (conversation_id)
+#  index_messages_on_created_at                 (created_at)
 #  index_messages_on_inbox_id                   (inbox_id)
 #  index_messages_on_sender_type_and_sender_id  (sender_type,sender_id)
 #  index_messages_on_source_id                  (source_id)

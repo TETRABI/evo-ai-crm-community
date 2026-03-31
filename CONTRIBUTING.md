@@ -137,12 +137,6 @@ docs(readme): update installation instructions
 - `swagger/` - API documentation
 - `docs/` - Additional documentation
 
-## Multi-Tenant Considerations
-
-- All operations must be scoped by `account_id`
-- Ensure data isolation between accounts
-- Test with multiple accounts when applicable
-
 ## Questions?
 
 - Check our [documentation](./README.md)

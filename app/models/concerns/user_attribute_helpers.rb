@@ -29,6 +29,12 @@ module UserAttributeHelpers
     administrator? ? 'administrator' : 'agent'
   end
 
+  # In single-tenant mode there is no AccountUser / permission table.
+  # All authenticated users are considered to have every permission.
+  def has_permission?(_permission)
+    true
+  end
+
   # Used internally for Evolution in Evolution
   def hmac_identifier
     hmac_key = GlobalConfig.get('EVOLUTION_INBOX_HMAC_KEY')['EVOLUTION_INBOX_HMAC_KEY']

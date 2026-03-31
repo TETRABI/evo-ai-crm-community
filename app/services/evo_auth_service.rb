@@ -84,13 +84,12 @@ class EvoAuthService
   end
 
   # Check account-scoped permission for user
-  def check_account_permission(user_id, account_id, permission_key)
+  def check_account_permission(user_id, _identifier = nil, permission_key)
     # Use new standard: /api/v1/users/:id/check_permission with account-id header
-    headers = { 'account-id' => account_id.to_s }
+    headers = {}
     response = instrument_remote_call(
       'check_account_permission',
-      user_id: user_id,
-      account_id: account_id
+      user_id: user_id
     ) do
       post_request("/api/v1/users/#{user_id}/check_permission",
                    { permission_key: permission_key },
@@ -128,11 +127,11 @@ class EvoAuthService
     false
   end
 
-  # Get user role for account
-  def get_role(user_id, account_id)
-    # Use new standard: /api/v1/users/:id/role with account-id header
-    headers = { 'account-id' => account_id.to_s }
-    response = instrument_remote_call('get_role', user_id: user_id, account_id: account_id) do
+  # Get user role
+  def get_role(user_id, _identifier = nil)
+    # Use new standard: /api/v1/users/:id/role
+    headers = {}
+    response = instrument_remote_call('get_role', user_id: user_id) do
       get_request("/api/v1/users/#{user_id}/role", headers)
     end
     data = response['data'] || {}

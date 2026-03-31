@@ -1,7 +1,7 @@
 class Conversations::UserMentionJob < ApplicationJob
   queue_as :default
 
-  def perform(mentioned_user_ids, conversation_id, _account_id = nil)
+  def perform(mentioned_user_ids, conversation_id)
     mentioned_user_ids.each do |mentioned_user_id|
       mention = Mention.find_by(
         user_id: mentioned_user_id,

@@ -1,6 +1,6 @@
 # Herda diretamente do controller de accounts
 class Api::V1::Oauth::ConversationsController < Api::V1::Accounts::ConversationsController
-  # Remove os middlewares do controller pai que dependem de account_id na URL
+  # Remove parent controller middlewares for OAuth
   skip_before_action :authenticate_request!
 
   skip_before_action :conversation
@@ -68,21 +68,6 @@ class Api::V1::Oauth::ConversationsController < Api::V1::Accounts::Conversations
     request.headers['Authorization']&.gsub(/^Bearer\s+/, '')
   end
 
-  # Simula o params[:account_id] que o controller pai espera
-  def params
-    super.merge(account_id: extract_account_id_from_token)
-  end
-
-  # Extrai account_id diretamente do token OAuth (sem recursão)
-  def extract_account_id_from_token
-    @extracted_account_id ||= begin
-      return nil unless oauth_token_present?
-
-      oauth_application = doorkeeper_token&.application
-      oauth_application&.account_id
-    end
-  end
-
   # OAuth-aware version of parent controller methods with UUID support
   def conversation
     @conversation ||= resolve_conversation_with_includes(params[:id])
@@ -110,13 +95,12 @@ class Api::V1::Oauth::ConversationsController < Api::V1::Accounts::Conversations
     # fallback for the old case where we do look up only using source id
     # In future we need to change this and make sure we do look up on combination of inbox_id and source_id
     # and deprecate the support of passing only source_id as the param
-    # 🔒 SECURITY: Validate ownership through inbox account_id to prevent cross-account access
+    # Fallback: look up contact_inbox by source_id
     if @contact_inbox.blank? && params[:source_id].present?
       if @inbox.present?
         # If inbox is already set, use it for validation
         @contact_inbox = ContactInbox.find_by(inbox: @inbox, source_id: params[:source_id])
       else
-        # Otherwise, validate through account_id
         @contact_inbox = ::ContactInbox.find_by(source_id: params[:source_id])
       end
       raise ActiveRecord::RecordNotFound if @contact_inbox.nil?

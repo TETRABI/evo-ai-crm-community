@@ -164,27 +164,25 @@ class Rack::Attack
   ###----------Application API Throttling-----------###
   ###-----------------------------------------------###
 
-  ## Prevent Abuse of Converstion Transcript APIs ###
-  throttle('/api/v1/accounts/:account_id/conversations/:conversation_id/transcript', limit: 30, period: 1.hour) do |req|
-    match_data = %r{/api/v1/accounts/(?<account_id>\d+)/conversations/(?<conversation_id>\d+)/transcript}.match(req.path)
-    match_data[:account_id] if match_data.present?
+  ## Prevent Abuse of Conversation Transcript APIs ###
+  throttle('/api/v1/conversations/:conversation_id/transcript', limit: 30, period: 1.hour) do |req|
+    match_data = %r{/api/v1/conversations/(?<conversation_id>\d+)/transcript}.match(req.path)
+    req.ip if match_data.present?
   end
 
   ## Prevent Abuse of attachment upload APIs ##
-  throttle('/api/v1/accounts/:account_id/upload', limit: 60, period: 1.hour) do |req|
-    match_data = %r{/api/v1/accounts/(?<account_id>\d+)/upload}.match(req.path)
-    match_data[:account_id] if match_data.present?
+  throttle('/api/v1/upload', limit: 60, period: 1.hour) do |req|
+    req.ip if req.path_without_extentions&.end_with?('/upload')
   end
 
   ## Prevent abuse of contact search api
-  throttle('/api/v1/accounts/:account_id/contacts/search', limit: ENV.fetch('RATE_LIMIT_CONTACT_SEARCH', '100').to_i, period: 1.minute) do |req|
-    match_data = %r{/api/v1/accounts/(?<account_id>\d+)/contacts/search}.match(req.path)
-    match_data[:account_id] if match_data.present?
+  throttle('/api/v1/contacts/search', limit: ENV.fetch('RATE_LIMIT_CONTACT_SEARCH', '100').to_i, period: 1.minute) do |req|
+    req.ip if req.path_without_extentions&.end_with?('/contacts/search')
   end
 
   # Throttle by individual user (based on uid)
-  throttle('/api/v2/accounts/:account_id/reports/user', limit: ENV.fetch('RATE_LIMIT_REPORTS_API_USER_LEVEL', '100').to_i, period: 1.minute) do |req|
-    match_data = %r{/api/v2/accounts/(?<account_id>\d+)/reports}.match(req.path)
+  throttle('/api/v2/reports/user', limit: ENV.fetch('RATE_LIMIT_REPORTS_API_USER_LEVEL', '100').to_i, period: 1.minute) do |req|
+    match_data = %r{/api/v2/reports}.match(req.path)
     # Extract user identification (uid for web, api_access_token for API requests)
     user_uid = req.get_header('HTTP_UID')
     api_access_token = req.get_header('HTTP_API_ACCESS_TOKEN') || req.get_header('api_access_token')
@@ -192,13 +190,13 @@ class Rack::Attack
     # Use uid if present, otherwise fallback to api_access_token for tracking
     user_identifier = user_uid.presence || api_access_token.presence
 
-    "#{user_identifier}:#{match_data[:account_id]}" if match_data.present? && user_identifier.present?
+    user_identifier if match_data.present? && user_identifier.present?
   end
 
-  ## Prevent abuse of reports api at account level
-  throttle('/api/v2/accounts/:account_id/reports', limit: ENV.fetch('RATE_LIMIT_REPORTS_API_ACCOUNT_LEVEL', '1000').to_i, period: 1.minute) do |req|
-    match_data = %r{/api/v2/accounts/(?<account_id>\d+)/reports}.match(req.path)
-    match_data[:account_id] if match_data.present?
+  ## Prevent abuse of reports api
+  throttle('/api/v2/reports', limit: ENV.fetch('RATE_LIMIT_REPORTS_API_ACCOUNT_LEVEL', '1000').to_i, period: 1.minute) do |req|
+    match_data = %r{/api/v2/reports}.match(req.path)
+    req.ip if match_data.present?
   end
 
   ## ----------------------------------------------- ##
@@ -217,15 +215,10 @@ ActiveSupport::Notifications.subscribe('throttle.rack_attack') do |_name, _start
   # Use uid if present, otherwise fallback to masked api_access_token for tracking
   user_identifier = user_uid.presence || masked_api_token.presence || 'unknown_user'
 
-  # Extract account ID if present
-  account_match = %r{/accounts/(?<account_id>\d+)}.match(req.path)
-  account_id = account_match ? account_match[:account_id] : 'unknown_account'
-
   Rails.logger.warn(
     "[Rack::Attack][Blocked] remote_ip: \"#{req.remote_ip}\", " \
     "path: \"#{req.path}\", " \
     "user_identifier: \"#{user_identifier}\", " \
-    "account_id: \"#{account_id}\", " \
     "method: \"#{req.request_method}\", " \
     "user_agent: \"#{req.user_agent}\""
   )

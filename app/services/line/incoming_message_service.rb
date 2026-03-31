@@ -100,7 +100,7 @@ class Line::IncomingMessageService
   end
 
   def account
-    @account ||= inbox.account
+    nil # Account model removed in single-tenant mode
   end
 
   def line_contact_info

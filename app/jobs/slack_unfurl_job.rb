@@ -26,12 +26,6 @@ class SlackUnfurlJob < ApplicationJob
     @params.dig(:event, :links)&.first&.[](:url)
   end
 
-  def extract_account_id(url)
-    account_id_regex = %r{/accounts/(\d+)}
-    match_data = url.match(account_id_regex)
-    match_data[1] if match_data
-  end
-
   # Check the channel has access to the bot to unfurl the links
   def channel_has_access
     return if @integration_hook.blank?

@@ -24,7 +24,7 @@ class Instagram::Messenger::MessageText < Instagram::BaseMessageText
   end
 
   def handle_client_error(error)
-    Rails.logger.warn("[FacebookUserFetchClientError]: account_id #{nil_id} inbox_id #{@inbox.id}")
+    Rails.logger.warn("[FacebookUserFetchClientError]: inbox_id #{@inbox.id}")
     Rails.logger.warn("[FacebookUserFetchClientError]: #{error.message}")
     EvolutionExceptionTracker.new(error, account: nil).capture_exception
   end

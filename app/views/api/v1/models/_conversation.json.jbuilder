@@ -22,4 +22,4 @@ json.messages do
     json.created_at message.created_at.to_i
   end
 end
-json.account_id conversation.account_id
+

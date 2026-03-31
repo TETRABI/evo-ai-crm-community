@@ -131,7 +131,7 @@ class Facebook::PostConversationService
   end
 
   def account
-    @account ||= inbox.account
+    nil # Account model removed in single-tenant mode
   end
 end
 

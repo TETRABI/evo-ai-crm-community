@@ -4,7 +4,6 @@ class CreateScheduledActionExecutionLogs < ActiveRecord::Migration[7.1]
   def change
     create_table :scheduled_action_execution_logs do |t|
       t.references :scheduled_action, null: false, foreign_key: true
-      t.uuid :account_id, null: false
       t.string :status, null: false, default: 'completed', limit: 50
       t.text :result_message
       t.jsonb :error_details, default: {}
@@ -15,8 +14,6 @@ class CreateScheduledActionExecutionLogs < ActiveRecord::Migration[7.1]
     end
 
     # Indexes for querying
-    add_index :scheduled_action_execution_logs, [:account_id, :created_at],
-      name: 'idx_exec_logs_account_created'
     add_index :scheduled_action_execution_logs, [:scheduled_action_id, :created_at],
       name: 'idx_exec_logs_action_created'
     add_index :scheduled_action_execution_logs, :status

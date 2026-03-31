@@ -14,6 +14,5 @@ if macro.updated_by.present?
   end
 end
 
-json.account_id macro.account_id
 json.actions macro.actions
 json.files macro.file_base_data if macro.files.any?

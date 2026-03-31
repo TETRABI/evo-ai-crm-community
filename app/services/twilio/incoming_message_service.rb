@@ -34,10 +34,6 @@ class Twilio::IncomingMessageService
     @inbox ||= twilio_channel.inbox
   end
 
-  def account
-    @account ||= inbox.account
-  end
-
   def phone_number
     twilio_channel.sms? ? params[:From] : params[:From].gsub('whatsapp:', '')
   end

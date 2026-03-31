@@ -18,7 +18,6 @@
 #  status                           :integer          default("active")
 #  created_at                       :datetime         not null
 #  updated_at                       :datetime         not null
-#  account_id                       :uuid
 #  agent_bot_id                     :uuid
 #  facebook_comment_agent_bot_id    :uuid
 #  inbox_id                         :uuid

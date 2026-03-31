@@ -63,10 +63,9 @@ class OauthController < ApplicationController
       # Determinar se é aplicação pública (PKCE) ou confidencial
       is_public_client = registration_data[:token_endpoint_auth_method] == 'none'
 
-      # Criar aplicação OAuth SEM account vinculada (account_id = nil)
+      # Create OAuth application
       application = OauthApplication.create!(
         name: registration_data[:client_name],
-        account_id: nil, # SEM account - será selecionada durante autorização
         uid: client_id,
         secret: is_public_client ? nil : client_secret, # Apps públicas não precisam de secret
         redirect_uri: redirect_uris.join("\n"),
@@ -165,7 +164,7 @@ class OauthController < ApplicationController
       # Extensões customizadas do Evolution
       evolution_extensions: {
         dynamic_oauth_available: true,
-        dynamic_client_format: 'dynamic_account_{account_id}',
+        dynamic_client_format: 'dynamic_app_{identifier}',
         available_accounts_endpoint: "#{backend_url}/api/v1/dynamic_oauth/available_accounts",
         validate_client_endpoint: "#{backend_url}/api/v1/dynamic_oauth/validate_client",
         api_base_url: "#{backend_url}/api/v1",

@@ -12,13 +12,11 @@
 #  open_minutes   :integer
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
-#  account_id     :uuid
 #  inbox_id       :uuid
 #
 # Indexes
 #
-#  index_working_hours_on_account_id  (account_id)
-#  index_working_hours_on_inbox_id    (inbox_id)
+#  index_working_hours_on_inbox_id  (inbox_id)
 #
 class WorkingHour < ApplicationRecord
   belongs_to :inbox

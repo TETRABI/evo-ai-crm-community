@@ -3,7 +3,7 @@ class AutomationRuleListener < BaseListener
     return if performed_by_automation?(event)
 
     conversation = event.data[:conversation]
-    account = Account.first
+    account = nil
     changed_attributes = event.data[:changed_attributes]
 
     return unless rule_present?('conversation_updated', account)
@@ -26,7 +26,7 @@ class AutomationRuleListener < BaseListener
     return if performed_by_automation?(event)
 
     conversation = event.data[:conversation]
-    account = Account.first
+    account = nil
     changed_attributes = event.data[:changed_attributes]
 
     return unless rule_present?('conversation_created', account)
@@ -49,7 +49,7 @@ class AutomationRuleListener < BaseListener
     return if performed_by_automation?(event)
 
     conversation = event.data[:conversation]
-    account = Account.first
+    account = nil
     changed_attributes = event.data[:changed_attributes]
 
     return unless rule_present?('conversation_opened', account)
@@ -73,7 +73,7 @@ class AutomationRuleListener < BaseListener
 
     return if ignore_message_created_event?(event)
 
-    account = Account.first
+    account = nil
     changed_attributes = event.data[:changed_attributes]
 
     return unless rule_present?('message_created', account)
@@ -98,7 +98,7 @@ class AutomationRuleListener < BaseListener
 
     pipeline_item = event.data[:pipeline_item]
     conversation = pipeline_item.conversation
-    account = Account.first
+    account = nil
     changed_attributes = event.data[:changed_attributes] || build_default_changed_attributes(pipeline_item)
 
     return unless rule_present?('pipeline_stage_updated', account)
@@ -121,7 +121,7 @@ class AutomationRuleListener < BaseListener
     return if performed_by_automation?(event)
 
     contact = event.data[:contact]
-    account = Account.first
+    account = nil
     changed_attributes = event.data[:changed_attributes]
 
     return unless rule_present?('contact_created', account)
@@ -162,7 +162,7 @@ class AutomationRuleListener < BaseListener
     return if performed_by_automation?(event)
 
     contact = event.data[:contact]
-    account = Account.first
+    account = nil
     changed_attributes = event.data[:changed_attributes]
 
     # Evitar loop infinito - múltiplas estratégias de detecção
@@ -224,16 +224,12 @@ class AutomationRuleListener < BaseListener
     end
   end
 
-  def rule_present?(event_name, account)
-    return false if account.blank?
-
-    current_account_rules(event_name, account).any?
+  def rule_present?(event_name, _account = nil)
+    current_account_rules(event_name).any?
   end
 
-  def current_account_rules(event_name, account = nil)
-    scope = AutomationRule.where(event_name: event_name, active: true)
-    scope = scope.where(account: account) if account.present?
-    scope
+  def current_account_rules(event_name, _account = nil)
+    AutomationRule.where(event_name: event_name, active: true)
   end
 
   def performed_by_automation?(event)

@@ -13,16 +13,14 @@
 #  visibility    :integer          default("private")
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
-#  account_id    :uuid             not null
 #  created_by_id :uuid             not null
 #
 # Indexes
 #
-#  index_pipelines_on_account_id                        (account_id)
-#  index_pipelines_on_account_id_and_is_default_unique  (account_id,is_default) WHERE (is_default = true)
-#  index_pipelines_on_account_id_and_name               (account_id,name) UNIQUE
-#  index_pipelines_on_created_by_id                     (created_by_id)
-#  index_pipelines_on_custom_fields                     (custom_fields) USING gin
+#  index_pipelines_on_created_by_id      (created_by_id)
+#  index_pipelines_on_custom_fields      (custom_fields) USING gin
+#  index_pipelines_on_is_default_unique  (is_default) WHERE (is_default = true)
+#  index_pipelines_on_name               (name) UNIQUE
 #
 class Pipeline < ApplicationRecord
   belongs_to :created_by, class_name: 'User'

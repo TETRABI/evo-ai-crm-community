@@ -211,7 +211,7 @@ class Crm::Bms::Mappers::ContactMapper
   def generate_device_token
     # Generate a unique token for this contact/device combination
     # This could be used for web push notifications in the future
-    "evolution-#{contact.account_id}-#{contact.id}-#{SecureRandom.hex(8)}"
+    "evolution-#{contact.id}-#{SecureRandom.hex(8)}"
   end
 
   def determine_device_type

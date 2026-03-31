@@ -4,15 +4,12 @@ class Api::V1::Oauth::AccountsController < Api::BaseController
   before_action :authenticate_user!
 
   def index
-    # Return accounts available for OAuth authorization
+    # Single-tenant mode: no Account model
     accounts = if current_user.administrator?
-                 Account.all.map do |account|
-                   {
-                     account_id: account.id,
-                     account_name: account.name,
-                     dynamic_client_id: DynamicOauthService.generate_dynamic_client_id(account.id)
-                   }
-                 end
+                 [{
+                   account_name: GlobalConfigService.load('BRAND_NAME', 'Evo CRM'),
+                   dynamic_client_id: DynamicOauthService.generate_dynamic_client_id('default')
+                 }]
                else
                  []
                end

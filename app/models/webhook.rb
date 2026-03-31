@@ -9,12 +9,11 @@
 #  webhook_type  :integer          default("account_type")
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
-#  account_id    :uuid
 #  inbox_id      :uuid
 #
 # Indexes
 #
-#  index_webhooks_on_account_id_and_url  (account_id,url) UNIQUE
+#  index_webhooks_on_url  (url) UNIQUE
 #
 class Webhook < ApplicationRecord
   belongs_to :inbox, optional: true

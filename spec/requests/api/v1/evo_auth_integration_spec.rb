@@ -9,7 +9,6 @@ RSpec.describe 'EvoAuth integration through API auth filter', type: :request do
   let(:token) { 'test-bearer-token' }
   let(:headers) { { 'Authorization' => "Bearer #{token}" } }
   let!(:user) { User.create!(name: 'Auth User', email: 'auth-user@example.com') }
-  let(:account_id) { 1 }
 
   around do |example|
     original_base_url = ENV['EVO_AUTH_SERVICE_URL']
@@ -80,10 +79,7 @@ RSpec.describe 'EvoAuth integration through API auth filter', type: :request do
         headers: { 'Content-Type' => 'application/json' }
       )
 
-    put '/api/v1/profile/set_active_account',
-        params: { profile: { account_id: account_id } },
-        headers: headers,
-        as: :json
+    get '/api/v1/profile', headers: headers, as: :json
 
     parsed = JSON.parse(response.body)
     expect(response).to have_http_status(:forbidden)
@@ -104,10 +100,7 @@ RSpec.describe 'EvoAuth integration through API auth filter', type: :request do
         headers: { 'Content-Type' => 'application/json' }
       )
 
-    put '/api/v1/profile/set_active_account',
-        params: { profile: { account_id: account_id } },
-        headers: headers,
-        as: :json
+    get '/api/v1/profile', headers: headers, as: :json
 
     parsed = JSON.parse(response.body)
     expect(response).to have_http_status(:unprocessable_content)
@@ -131,10 +124,7 @@ RSpec.describe 'EvoAuth integration through API auth filter', type: :request do
       .with(headers: { 'Authorization' => "Bearer #{token}" })
       .to_return(status: 200, body: '', headers: { 'Content-Type' => 'application/json' })
 
-    put '/api/v1/profile/set_active_account',
-        params: { profile: { account_id: account_id } },
-        headers: headers,
-        as: :json
+    get '/api/v1/profile', headers: headers, as: :json
 
     parsed = JSON.parse(response.body)
     expect(response).to have_http_status(:service_unavailable)
@@ -149,17 +139,13 @@ RSpec.describe 'EvoAuth integration through API auth filter', type: :request do
         body: {
           success: true,
           data: {
-            user: { id: user.id, email: user.email },
-            accounts: [{ id: account_id }]
+            user: { id: user.id, email: user.email }
           }
         }.to_json,
         headers: { 'Content-Type' => 'application/json' }
       )
 
-    put '/api/v1/profile/set_active_account',
-        params: { profile: { account_id: account_id } },
-        headers: headers,
-        as: :json
+    get '/api/v1/profile', headers: headers, as: :json
 
     expect(response).to have_http_status(:ok)
   end

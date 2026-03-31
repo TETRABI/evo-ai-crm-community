@@ -29,17 +29,12 @@ class RemoveSlaSystem < ActiveRecord::Migration[7.0]
 
     # Remove indexes
     remove_index :conversations, :sla_policy_id if index_exists?(:conversations, :sla_policy_id)
-    remove_index :sla_events, :account_id if index_exists?(:sla_events, :account_id)
     remove_index :sla_events, :applied_sla_id if index_exists?(:sla_events, :applied_sla_id)
     remove_index :sla_events, :conversation_id if index_exists?(:sla_events, :conversation_id)
     remove_index :sla_events, :event_type if index_exists?(:sla_events, :event_type)
     remove_index :sla_events, :sla_policy_id if index_exists?(:sla_events, :sla_policy_id)
-    remove_index :sla_policies, :account_id if index_exists?(:sla_policies, :account_id)
-    remove_index :applied_slas, :account_id if index_exists?(:applied_slas, :account_id)
     remove_index :applied_slas, :conversation_id if index_exists?(:applied_slas, :conversation_id)
     remove_index :applied_slas, :sla_policy_id if index_exists?(:applied_slas, :sla_policy_id)
-    remove_index :applied_slas, [:account_id, :sla_policy_id, :conversation_id], name: 'index_applied_slas_on_account_sla_policy_conversation' if index_exists?(:applied_slas, [:account_id, :sla_policy_id, :conversation_id], name: 'index_applied_slas_on_account_sla_policy_conversation')
-
     # Drop tables
     drop_table :sla_events if table_exists?(:sla_events)
     drop_table :applied_slas if table_exists?(:applied_slas)
@@ -54,7 +49,6 @@ class RemoveSlaSystem < ActiveRecord::Migration[7.0]
     create_table :sla_policies, id: :uuid do |t|
       t.string :name, null: false
       t.text :description
-      t.uuid :account_id, null: false
       t.boolean :first_response_time_enabled, default: false
       t.integer :first_response_time_threshold
       t.boolean :next_response_time_enabled, default: false
@@ -63,18 +57,14 @@ class RemoveSlaSystem < ActiveRecord::Migration[7.0]
       t.integer :resolution_time_threshold
       t.boolean :only_during_business_hours, default: false
       t.timestamps
-
-      t.index :account_id
     end
 
     create_table :applied_slas, id: :uuid do |t|
-      t.uuid :account_id, null: false
       t.uuid :sla_policy_id, null: false
       t.uuid :conversation_id, null: false
       t.timestamps
 
-      t.index [:account_id, :sla_policy_id, :conversation_id], unique: true, name: 'index_applied_slas_on_account_sla_policy_conversation'
-      t.index :account_id
+      t.index [:sla_policy_id, :conversation_id], unique: true, name: 'index_applied_slas_on_sla_policy_conversation'
       t.index :conversation_id
       t.index :sla_policy_id
 
@@ -83,7 +73,6 @@ class RemoveSlaSystem < ActiveRecord::Migration[7.0]
     end
 
     create_table :sla_events, id: :uuid do |t|
-      t.uuid :account_id, null: false
       t.uuid :sla_policy_id, null: false
       t.uuid :applied_sla_id, null: false
       t.uuid :conversation_id, null: false
@@ -91,7 +80,6 @@ class RemoveSlaSystem < ActiveRecord::Migration[7.0]
       t.jsonb :meta, default: {}
       t.timestamps
 
-      t.index :account_id
       t.index :applied_sla_id
       t.index :conversation_id
       t.index :event_type

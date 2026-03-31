@@ -10,6 +10,5 @@ class AddHierarchyToPipelineTasks < ActiveRecord::Migration[7.1]
     
     add_index :pipeline_tasks, [:parent_task_id, :position]
     add_index :pipeline_tasks, [:pipeline_item_id, :parent_task_id]
-    add_index :pipeline_tasks, [:account_id, :parent_task_id]
   end
 end

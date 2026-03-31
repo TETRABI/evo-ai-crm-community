@@ -25,8 +25,7 @@ class Api::V1::ProfilesController < Api::BaseController
   def availability
     @user.update!(availability: availability_params[:availability])
 
-    Rails.configuration.dispatcher.dispatch(Events::Types::ACCOUNT_PRESENCE_UPDATED, Time.zone.now, account_id: availability_params[:account_id],
-                                                                                                    user_id: @current_user.id,
+    Rails.configuration.dispatcher.dispatch(Events::Types::ACCOUNT_PRESENCE_UPDATED, Time.zone.now, user_id: @current_user.id,
                                                                                                     status: availability_params[:availability])
   end
 
@@ -45,11 +44,11 @@ class Api::V1::ProfilesController < Api::BaseController
   end
 
   def availability_params
-    params.require(:profile).permit(:account_id, :availability)
+    params.require(:profile).permit(:availability)
   end
 
   def auto_offline_params
-    params.require(:profile).permit(:account_id, :auto_offline)
+    params.require(:profile).permit(:auto_offline)
   end
 
   def profile_params
@@ -59,7 +58,6 @@ class Api::V1::ProfilesController < Api::BaseController
       :display_name,
       :avatar,
       :message_signature,
-      :account_id,
       ui_settings: {}
     )
   end

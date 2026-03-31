@@ -26,7 +26,7 @@ end
 json.labels do
   if resource.present? && resource.labels.present?
     json.array! resource.labels do |tag|
-      label = resource.account.labels.find_by(title: tag.name)
+      label = Label.find_by(title: tag.name)
       json.name tag.name
       json.color label&.color || '#1f93ff'
     end

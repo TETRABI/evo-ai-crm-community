@@ -14,12 +14,10 @@
 #  regex_pattern          :string
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
-#  account_id             :uuid
 #
 # Indexes
 #
-#  attribute_key_model_index                         (attribute_key,attribute_model,account_id) UNIQUE
-#  index_custom_attribute_definitions_on_account_id  (account_id)
+#  attribute_key_model_index  (attribute_key,attribute_model) UNIQUE
 #
 class CustomAttributeDefinition < ApplicationRecord
   include Events::Types
@@ -54,7 +52,7 @@ class CustomAttributeDefinition < ApplicationRecord
   }
   enum attribute_display_type: { text: 0, number: 1, currency: 2, percent: 3, link: 4, date: 5, list: 6, checkbox: 7, datetime: 8 }
 
-  # account_id column retained for data compatibility but association removed
+  # Single-tenant: no account association needed
   # Widget pre-chat sync trigger chain:
   # - create: sync metadata to matching pre-chat fields (if any) + dispatch event
   # - update: sync metadata to matching pre-chat fields + dispatch event

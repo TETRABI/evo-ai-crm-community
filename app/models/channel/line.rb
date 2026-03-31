@@ -7,7 +7,6 @@
 #  line_channel_token  :string           not null
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
-#  account_id          :uuid             not null
 #  line_channel_id     :string           not null
 #
 # Indexes

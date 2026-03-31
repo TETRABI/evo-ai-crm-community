@@ -1,7 +1,7 @@
 class Crm::Bms::CustomAttributeSyncJob < ApplicationJob
   queue_as :integrations
 
-  def perform(custom_attribute_definition_id, _account_id = nil, action = 'sync')
+  def perform(custom_attribute_definition_id, action = 'sync')
     @custom_attribute_definition = CustomAttributeDefinition.find_by(id: custom_attribute_definition_id)
     return unless @custom_attribute_definition
 

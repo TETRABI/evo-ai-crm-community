@@ -34,34 +34,18 @@ class MigrateEmailTemplatesToMessageTemplates < ActiveRecord::Migration[7.1]
     skipped_count = 0
 
     EmailTemplate.find_each do |email_template|
-      if email_template.account_id.present?
-        email_channel = EmailChannel.find_by(account_id: email_template.account_id)
-
-        unless email_channel
-          say "  Pulando template '#{email_template.name}': canal de email não encontrado para account_id #{email_template.account_id}", true
-          skipped_count += 1
-          next
-        end
-
+      # Migrate each template to all email channels
+      channels_found = false
+      EmailChannel.find_each do |email_channel|
         if migrate_email_template_to_channel(email_template, email_channel)
           migrated_count += 1
-        else
-          skipped_count += 1
+          channels_found = true
         end
-      else
-        # Template sem account_id específico - migrar para todos os canais
-        channels_found = false
-        EmailChannel.find_each do |email_channel|
-          if migrate_email_template_to_channel(email_template, email_channel)
-            migrated_count += 1
-            channels_found = true
-          end
-        end
+      end
 
-        unless channels_found
-          say "  Pulando template '#{email_template.name}': nenhum canal de email encontrado", true
-          skipped_count += 1
-        end
+      unless channels_found
+        say "  Pulando template '#{email_template.name}': nenhum canal de email encontrado", true
+        skipped_count += 1
       end
     end
 

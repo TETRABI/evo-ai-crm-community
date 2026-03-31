@@ -8,7 +8,7 @@ class Api::V1::Oauth::AgentsController < Api::V1::Accounts::AgentsController
     destroy: 'oauth_agents.delete'
   })
 
-  # Remove os middlewares do controller pai que dependem de account_id na URL
+  # Remove parent controller middlewares for OAuth
   skip_before_action :authenticate_request!
 
   # Aplica middleware OAuth
@@ -49,20 +49,6 @@ class Api::V1::Oauth::AgentsController < Api::V1::Accounts::AgentsController
     request.headers['Authorization']&.gsub(/^Bearer\s+/, '')
   end
 
-  # Simula o params[:account_id] que o controller pai espera
-  def params
-    super.merge(account_id: extract_account_id_from_token)
-  end
-
-  # Extrai account_id diretamente do token OAuth (sem recursão)
-  def extract_account_id_from_token
-    @extracted_account_id ||= begin
-      return nil unless oauth_token_present?
-      oauth_application = doorkeeper_token&.application
-      oauth_application&.account_id
-    end
-  end
-
   def fetch_agent
     @agent = agents.find(params[:id])
   end
@@ -78,6 +64,6 @@ class Api::V1::Oauth::AgentsController < Api::V1::Accounts::AgentsController
   end
 
   def agents
-    @agents ||= User.all.order_by_full_name.includes(:account_users, { avatar_attachment: [:blob] })
+    @agents ||= User.all.order_by_full_name.includes({ avatar_attachment: [:blob] })
   end
 end

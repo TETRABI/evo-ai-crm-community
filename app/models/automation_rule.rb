@@ -13,13 +13,11 @@
 #  name        :string           not null
 #  created_at  :datetime         not null
 #  updated_at  :datetime         not null
-#  account_id  :uuid             not null
 #
 # Indexes
 #
-#  index_automation_rules_on_account_id  (account_id)
-#  index_automation_rules_on_flow_data   (flow_data) USING gin
-#  index_automation_rules_on_mode        (mode)
+#  index_automation_rules_on_flow_data  (flow_data) USING gin
+#  index_automation_rules_on_mode       (mode)
 #
 class AutomationRule < ApplicationRecord
   include Rails.application.routes.url_helpers

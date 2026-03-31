@@ -6,7 +6,7 @@ module Whatsapp::EvolutionGoHandlers::Helpers
   end
 
   def account
-    @account ||= inbox&.account
+    nil # Account model removed in single-tenant mode
   end
 
   def incoming?

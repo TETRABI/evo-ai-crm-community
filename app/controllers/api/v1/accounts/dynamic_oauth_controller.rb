@@ -33,7 +33,7 @@ class Api::V1::Accounts::DynamicOauthController < Api::V1::Accounts::BaseControl
       return render json: {
         success: false,
         error: 'Invalid dynamic client ID format',
-        expected_format: 'dynamic_account_{account_id}'
+        expected_format: 'dynamic_app_{identifier}'
       }, status: :bad_request
     end
 

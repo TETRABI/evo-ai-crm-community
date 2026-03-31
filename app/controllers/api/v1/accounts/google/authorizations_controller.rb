@@ -51,10 +51,10 @@ class Api::V1::Accounts::Google::AuthorizationsController < Api::V1::Accounts::B
     end
 
     begin
-      # Verify state token to get account_id
-      account_id = verify_google_token(state)
+      # Verify state token
+      identifier = verify_google_token(state)
 
-      unless account_id
+      unless identifier
         render json: { success: false, error: 'Invalid or expired state token' }, status: :unauthorized
         return
       end

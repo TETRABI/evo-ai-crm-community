@@ -14,12 +14,12 @@ module GoogleConcern
 
   # Generates a signed JWT token for Google integration
   #
-  # @param account_id [Integer] The account ID to encode in the token
+  # @param identifier [String] The identifier to encode in the token
   # @return [String, nil] The encoded JWT token or nil if client secret is missing
-  def generate_google_token(account_id)
+  def generate_google_token(identifier)
     return if client_secret.blank?
 
-    JWT.encode(token_payload(account_id), client_secret, 'HS256')
+    JWT.encode(token_payload(identifier), client_secret, 'HS256')
   rescue StandardError => e
     Rails.logger.error("Failed to generate Google token: #{e.message}")
     nil
@@ -28,7 +28,7 @@ module GoogleConcern
   # Verifies and decodes a Google JWT token
   #
   # @param token [String] The JWT token to verify
-  # @return [Integer, nil] The account ID from the token or nil if invalid
+  # @return [String, nil] The identifier from the token or nil if invalid
   def verify_google_token(token)
     return if token.blank? || client_secret.blank?
 
@@ -37,9 +37,9 @@ module GoogleConcern
 
   private
 
-  def token_payload(account_id)
+  def token_payload(identifier)
     {
-      sub: account_id,
+      sub: identifier,
       iat: Time.current.to_i
     }
   end

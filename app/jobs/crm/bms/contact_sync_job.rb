@@ -1,7 +1,7 @@
 class Crm::Bms::ContactSyncJob < ApplicationJob
   queue_as :integrations
 
-  def perform(contact_id, _account_id = nil, action = 'sync')
+  def perform(contact_id, action = 'sync')
     @contact = Contact.find_by(id: contact_id)
     return unless @contact
 

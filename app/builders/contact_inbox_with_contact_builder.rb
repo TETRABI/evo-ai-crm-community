@@ -79,10 +79,6 @@ class ContactInboxWithContactBuilder
     @contact_inbox ||= create_contact_inbox
   end
 
-  def account
-    @account ||= inbox.account
-  end
-
   def create_contact_inbox
     ContactInboxBuilder.new(
       contact: @contact,
@@ -102,7 +98,7 @@ class ContactInboxWithContactBuilder
   end
 
   def create_contact
-    contact = account.contacts.new(
+    contact = Contact.new(
       name: contact_attributes[:name] || ::Haikunator.haikunate(1000),
       phone_number: contact_attributes[:phone_number],
       email: contact_attributes[:email],
@@ -164,18 +160,18 @@ class ContactInboxWithContactBuilder
   def find_contact_by_identifier(identifier)
     return if identifier.blank?
 
-    account.contacts.find_by(identifier: identifier)
+    Contact.find_by(identifier: identifier)
   end
 
   def find_contact_by_email(email)
     return if email.blank?
 
-    account.contacts.from_email(email)
+    Contact.from_email(email)
   end
 
   def find_contact_by_phone_number(phone_number)
     return if phone_number.blank?
 
-    account.contacts.find_by(phone_number: phone_number)
+    Contact.find_by(phone_number: phone_number)
   end
 end

@@ -32,7 +32,8 @@ class BaseListener
   private
 
   def single_tenant_account
-    @single_tenant_account ||= Account.first
+    # Account model has been removed in single-tenant mode
+    nil
   end
 
   def extract_changed_attributes(event)

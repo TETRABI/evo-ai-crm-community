@@ -40,8 +40,8 @@ class Api::V1::Accounts::Instagram::AuthorizationsController < Api::V1::Accounts
     end
 
     begin
-      account_id = verify_instagram_token(state)
-      unless account_id.present?
+      identifier = verify_instagram_token(state)
+      unless identifier.present?
         render json: { success: false, error: 'Invalid or expired state token' }, status: :unauthorized
         return
       end

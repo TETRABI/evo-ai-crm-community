@@ -1,28 +1,28 @@
 class PipelineTaskPolicy < ApplicationPolicy
   def index?
-    @account_user.administrator? || @account_user.agent?
+    @user.administrator? || @user.agent?
   end
 
   def show?
-    return true if @account_user.administrator?
+    return true if @user.administrator?
 
     # Agents can see tasks
-    @account_user.agent?
+    @user.agent?
   end
 
   def create?
-    @account_user.administrator? || @account_user.agent?
+    @user.administrator? || @user.agent?
   end
 
   def update?
-    return true if @account_user.administrator?
+    return true if @user.administrator?
 
     # Creator or assignee can update
     @record.created_by_id == @user.id || @record.assigned_to_id == @user.id
   end
 
   def destroy?
-    return true if @account_user.administrator?
+    return true if @user.administrator?
 
     # Only creator can delete
     @record.created_by_id == @user.id

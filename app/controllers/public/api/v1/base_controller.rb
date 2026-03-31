@@ -26,20 +26,11 @@ class Public::Api::V1::BaseController < PublicController
       return
     end
 
-    # API key must belong to an Account
-    unless @access_token.owner_type == 'Account'
-      render_unauthorized('API key must belong to an account')
-      return
-    end
-
-    # Set account context
-    @account = @access_token.owner
-
     # Set api_access_token for event listeners (EvoCampaign, Hooks, etc.)
     # This allows listeners to track the source of the lead creation
     Current.api_access_token = api_key
 
-    Rails.logger.info "Public API: Authenticated with API key for account #{@account.id} - #{@account.name}"
+    Rails.logger.info "Public API: Authenticated with API key (owner: #{@access_token.owner_type})"
     Rails.logger.info "Public API: api_access_token set for event listeners"
   end
 

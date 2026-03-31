@@ -388,15 +388,12 @@ namespace :scylla do
       exit 0
     end
 
-    account_id = ENV['ACCOUNT_ID']
     conversation_id = ENV['CONVERSATION_ID']
 
     puts 'Starting migration from PostgreSQL to ScyllaDB...'
-    puts "Account ID: #{account_id || 'ALL'}"
     puts "Conversation ID: #{conversation_id || 'ALL'}"
 
     result = ScyllaDB::MigrationService.new.migrate_messages_from_postgresql(
-      account_id: account_id,
       conversation_id: conversation_id
     )
 

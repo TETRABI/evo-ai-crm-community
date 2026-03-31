@@ -201,7 +201,7 @@ group :development do
   gem 'rack-mini-profiler', '>= 3.2.0', require: false
   gem 'stackprof'
   # Should install the associated chrome extension to view query logs
-  gem 'meta_request', '>= 0.8.3'
+  gem 'meta_request', '>= 0.8.3', require: false
 end
 
 group :test do
@@ -219,9 +219,9 @@ group :development, :test do
   # static analysis
   gem 'brakeman'
   gem 'bundle-audit', require: false
-  gem 'byebug', platform: :mri
+  gem 'byebug', platform: :mri, require: false
   gem 'climate_control'
-  gem 'debug', '~> 1.8'
+  gem 'debug', '~> 1.8', require: false
   gem 'factory_bot_rails', '>= 6.4.3'
   gem 'listen'
   gem 'mock_redis'

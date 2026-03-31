@@ -7,12 +7,11 @@
 #  push_flags  :integer          default(0), not null
 #  created_at  :datetime         not null
 #  updated_at  :datetime         not null
-#  account_id  :uuid
 #  user_id     :uuid
 #
 # Indexes
 #
-#  by_account_user  (account_id,user_id) UNIQUE
+#  by_user  (user_id) UNIQUE
 #
 class NotificationSetting < ApplicationRecord
   # used for single column multi flags
