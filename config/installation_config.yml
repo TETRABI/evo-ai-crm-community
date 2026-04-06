@@ -717,6 +717,22 @@
   locked: true
 # ------- End of Instagram Channel Related Config ------- #
 
+## ------ Frontend Runtime Configuration ------ ##
+- name: RECAPTCHA_SITE_KEY
+  display_title: 'reCAPTCHA Site Key'
+  value:
+  locked: false
+  description: 'Google reCAPTCHA v3 site key for bot protection'
+  type: text
+
+- name: CLARITY_PROJECT_ID
+  display_title: 'Clarity Project ID'
+  value:
+  locked: false
+  description: 'Microsoft Clarity project ID for user behavior analytics'
+  type: text
+## ------ End Frontend Runtime Configuration ------ ##
+
 ## ------ Stripe Payments Configuration ------ ##
 - name: STRIPE_PUBLISHABLE_KEY
   display_title: 'Stripe Publishable Key'
