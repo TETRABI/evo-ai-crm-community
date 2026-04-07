@@ -1,6 +1,8 @@
 require_relative '../../lib/global_config_service'
 
 Rails.application.configure do
+  # Allow all hosts (traffic is already filtered by the API gateway/nginx)
+  config.hosts.clear
   # Settings specified here will take precedence over those in config/application.rb.
 
   # Code is not reloaded between requests.
