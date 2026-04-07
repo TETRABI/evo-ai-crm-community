@@ -11,5 +11,8 @@ class GlobalConfigService
 
     # Priority 3: Return default value if not found anywhere
     default_value
+  rescue ActiveRecord::ActiveRecordError, NameError, PG::Error => _e
+    # Database or model not available yet (boot phase, before migrations, etc.)
+    ENV.fetch(config_key, default_value)
   end
 end
