@@ -362,7 +362,19 @@ module Api
               template_params = extract_message_template_params
               Rails.logger.info "Creating template with params: #{template_params.inspect}"
 
-              template = @inbox.channel.create_message_template(template_params)
+              # For providers that publish templates to an external service
+              # (WhatsApp Cloud, Notificame, Evolution Go …), submit the
+              # template upstream and rely on the provider's sync flow to
+              # persist the record locally with the real approval status
+              # (PENDING/APPROVED/REJECTED). For channels without upstream
+              # template approval (Api, Email, etc.), fall back to the
+              # local-only path so behaviour is unchanged.
+              template =
+                if @inbox.channel.respond_to?(:create_template)
+                  @inbox.channel.create_template(template_params.to_h.stringify_keys)
+                else
+                  @inbox.channel.create_message_template(template_params)
+                end
 
               # Reload channel to clear any cached associations
               @inbox.channel.reload

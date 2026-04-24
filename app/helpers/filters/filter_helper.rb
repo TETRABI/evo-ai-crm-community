@@ -61,6 +61,8 @@ module Filters::FilterHelper
       date_filter(current_filter, query_hash, filter_operator_value)
     when 'labels'
       tag_filter_query(query_hash, current_index)
+    when 'pipeline'
+      pipeline_filter_query(query_hash, current_index)
     when 'text_case_insensitive'
       text_case_insensitive_filter(query_hash, filter_operator_value)
     else

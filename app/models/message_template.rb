@@ -158,6 +158,7 @@ class MessageTemplate < ApplicationRecord
       'language' => language,
       'category' => category,
       'template_type' => template_type,
+      'status' => settings.is_a?(Hash) ? settings['status'] : nil,
       'settings' => settings,
       'components' => components,
       'variables' => variables,
