@@ -17,6 +17,53 @@ module Whatsapp::EvolutionGoHandlers::MessagesUpsert
   end
 
   def set_contact
+    if group_message?
+      set_group_contact
+    else
+      set_individual_contact
+    end
+  end
+
+  def set_group_contact
+    Rails.logger.debug { "Evolution Go API: Setting group contact - jid: #{group_jid}, subject: #{group_subject}" }
+
+    contact_inbox = ::ContactInboxWithContactBuilder.new(
+      source_id: group_jid,
+      inbox: inbox,
+      contact_attributes: {
+        name: group_subject,
+        identifier: group_jid
+      }
+    ).perform
+
+    @contact_inbox = contact_inbox
+    @contact = contact_inbox.contact
+
+    update_group_name_if_safe
+
+    Rails.logger.debug { "Evolution Go API: Group contact set - ID: #{@contact.id}, Name: #{@contact.name}, Identifier: #{@contact.identifier}, Source ID: #{@contact_inbox.source_id}" }
+  end
+
+  # Only refresh @contact.name when the new subject is a *real* group subject and
+  # the current name is empty or still the synthetic fallback. Prevents two regressions:
+  # 1. Operator renamed the group in CRM → next webhook would overwrite the rename.
+  # 2. A webhook arrives without groupData (partial sync) → fallback "WhatsApp Group XXXX"
+  #    would clobber a previously-discovered real subject.
+  def update_group_name_if_safe
+    return if group_subject.blank?
+    return if @contact.name == group_subject
+    return if fallback_group_name?(group_subject)
+    return unless @contact.name.blank? || fallback_group_name?(@contact.name)
+
+    Rails.logger.debug { "Evolution Go API: Updating group name #{@contact.name.inspect} -> #{group_subject.inspect}" }
+    @contact.update!(name: group_subject)
+  end
+
+  def fallback_group_name?(name)
+    name.to_s.match?(/\AWhatsApp Group(?:\s+\S+)?\z/)
+  end
+
+  def set_individual_contact
     Rails.logger.info "Evolution Go API: Setting contact - inbox present: #{inbox.present?}"
     Rails.logger.info "Evolution Go API: Inbox details: #{inbox.inspect}" if inbox
 
@@ -418,9 +465,10 @@ module Whatsapp::EvolutionGoHandlers::MessagesUpsert
   end
 
   def message_content_attributes
-    {
-      external_created_at: message_timestamp
-    }
+    attrs = { external_created_at: message_timestamp }
+    attrs[:sender_name] = participant_push_name if group_message? && participant_push_name.present?
+    attrs[:media_type] = evolution_go_media_type if evolution_go_media_type.present?
+    attrs
   end
 
   def configure_audio_metadata(attachment)
