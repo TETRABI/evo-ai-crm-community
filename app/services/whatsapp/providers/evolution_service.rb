@@ -397,24 +397,13 @@ class Whatsapp::Providers::EvolutionService < Whatsapp::Providers::BaseService
   def generate_direct_s3_url(attachment)
     return attachment.file_url unless attachment.file.attached?
 
-    # Extract S3 details from existing signed URL
+    # Always return the signed URL — see the matching method in
+    # evolution_go_service.rb for the full rationale. Stripping the AWS
+    # signing parameters only works on public buckets; on Cloudflare R2,
+    # private S3 buckets and MinIO, the upstream provider gets a `text/xml`
+    # error body back and rejects the upload.
     signed_url = attachment.download_url
-
-    Rails.logger.info "[Evolution S3] Original signed URL: #{signed_url}"
-
-    # Try to extract bucket and key from the signed URL (flexible regex for different S3 providers)
-    if signed_url =~ %r{https://([^/]+)/([^?]+)}
-      host = Regexp.last_match(1)
-      key = Regexp.last_match(2)
-
-      # Create direct public URL - just remove query parameters
-      direct_url = "https://#{host}/#{key}"
-      Rails.logger.info "[Evolution S3] Generated direct URL: #{direct_url}"
-      return direct_url
-    end
-
-    # Fallback to original URL if can't parse
-    Rails.logger.warn "[Evolution S3] Could not parse S3 URL, using original: #{signed_url}"
+    Rails.logger.info "[Evolution S3] Using signed URL (works for both public and private buckets)"
     signed_url
   end
 
