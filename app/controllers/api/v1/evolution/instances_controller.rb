@@ -1,4 +1,6 @@
 class Api::V1::Evolution::InstancesController < Api::V1::BaseController
+  include EvolutionConcern
+
   def index
     Rails.logger.info "Evolution API fetch instances called with params: #{params.inspect}"
 
@@ -10,8 +12,7 @@ class Api::V1::Evolution::InstancesController < Api::V1::BaseController
         channel = find_whatsapp_channel_by_instance_name(instance_name)
 
         if channel
-          api_url = channel.provider_config['api_url']
-          api_hash = channel.provider_config['admin_token']
+          api_url, api_hash = evolution_credentials_for!(channel)
 
           result = get_instance_info(api_url, api_hash, instance_name)
 
@@ -26,13 +27,15 @@ class Api::V1::Evolution::InstancesController < Api::V1::BaseController
         # List all instances for this account
         channels = Channel::Whatsapp.joins(:inbox)
                                     .where(provider: 'evolution')
-                                    
+
 
         instances = channels.map do |ch|
           {
             instance_name: ch.provider_config['instance_name'],
             phone_number: ch.phone_number,
-            api_url: ch.provider_config['api_url'],
+            # Falls back to global EVOLUTION_API_URL when the channel was
+            # created via the Admin Settings flow (provider_config left blank).
+            api_url: evolution_api_url_for(ch),
             status: 'connected' # You might want to check actual status
           }
         end
@@ -56,8 +59,7 @@ class Api::V1::Evolution::InstancesController < Api::V1::BaseController
       channel = find_whatsapp_channel_by_instance_name(instance_name)
 
       if channel
-        api_url = channel.provider_config['api_url']
-        api_hash = channel.provider_config['admin_token']
+        api_url, api_hash = evolution_credentials_for!(channel)
 
         result = logout_instance(api_url, api_hash, instance_name)
 
