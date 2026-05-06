@@ -109,12 +109,18 @@ class ConversationFinder
 
     # Complete eager loading to avoid N+1 queries
     # Keep preload minimal for index/search/filter. Heavy associations are loaded on show.
+    # `pipeline_items` is included so the conversation list sidebar can render the
+    # pipeline/stage chip — without this preload the serializer skips the
+    # `pipelines` block (it only runs when the association is loaded), and the
+    # chip only appears later if some other action triggers a refetch with the
+    # association eager-loaded.
     query = query.preload(
       :inbox,
       :contact,
       :assignee,
       :team,
-      :contact_inbox
+      :contact_inbox,
+      pipeline_items: [:pipeline, :pipeline_stage]
     )
 
     # Apply sorting

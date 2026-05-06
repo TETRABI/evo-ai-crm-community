@@ -6,6 +6,7 @@ module Whatsapp::EvolutionHandlers::MessagesUpsert
   include Whatsapp::EvolutionHandlers::AttachmentProcessor
   include Whatsapp::EvolutionHandlers::FileExtensions
   include Whatsapp::EvolutionHandlers::ContentHandlers
+  include Whatsapp::EvolutionHandlers::ProfilePictureHandler
   include EvolutionHelper
 
   private
@@ -51,6 +52,51 @@ module Whatsapp::EvolutionHandlers::MessagesUpsert
   end
 
   def set_contact
+    if jid_type == 'group'
+      set_group_contact
+    else
+      set_individual_contact
+    end
+  end
+
+  def set_group_contact
+    subject = group_subject
+    Rails.logger.debug { "Evolution API: Setting group contact - jid: #{group_jid}, subject: #{subject}" }
+
+    contact_inbox = ::ContactInboxWithContactBuilder.new(
+      source_id: group_jid,
+      inbox: inbox,
+      contact_attributes: {
+        name: subject,
+        identifier: group_jid
+      }
+    ).perform
+
+    @contact_inbox = contact_inbox
+    @contact = contact_inbox.contact
+
+    update_group_name_if_safe(subject)
+  end
+
+  # Mirror of the Evolution Go safeguard: only refresh @contact.name when the
+  # incoming subject is a real one and the current name is empty or still the
+  # synthetic fallback. Prevents overwriting an operator-renamed group, and
+  # prevents the fallback from clobbering a real subject that arrived later.
+  def update_group_name_if_safe(subject)
+    return if subject.blank?
+    return if @contact.name == subject
+    return if fallback_group_name?(subject)
+    return unless @contact.name.blank? || fallback_group_name?(@contact.name)
+
+    Rails.logger.debug { "Evolution API: Updating group name #{@contact.name.inspect} -> #{subject.inspect}" }
+    @contact.update!(name: subject)
+  end
+
+  def fallback_group_name?(name)
+    name.to_s.match?(/\AWhatsApp Group(?:\s+\S+)?\z/)
+  end
+
+  def set_individual_contact
     push_name = contact_name
     raw_source_id = phone_number_from_jid
 
@@ -74,6 +120,8 @@ module Whatsapp::EvolutionHandlers::MessagesUpsert
 
     # Update contact name if it was just the phone number
     @contact.update!(name: push_name) if @contact.name == raw_source_id && push_name.present?
+
+    update_contact_profile_picture(@contact, source_id)
   end
 
   def phone_number_string?(value)
@@ -113,11 +161,23 @@ module Whatsapp::EvolutionHandlers::MessagesUpsert
   end
 
   def message_processable?
-    return false if jid_type != 'user'
+    return false unless jid_type.in?(%w[user group])
     return false if ignore_message?
     return false if find_message_by_source_id(raw_message_id) || message_under_process?
 
     true
+  end
+
+  # Override base conversation_params so groups carry their JID in additional_attributes,
+  # which the outbound send path uses to route replies back to the group.
+  def conversation_params
+    params = {
+      inbox_id: @inbox.id,
+      contact_id: @contact.id,
+      contact_inbox_id: @contact_inbox.id
+    }
+    params[:additional_attributes] = { evolution_chat_id: group_jid } if jid_type == 'group'
+    params
   end
 
   def update_conversation_status_if_needed

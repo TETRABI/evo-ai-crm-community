@@ -31,11 +31,13 @@ class Api::V1::EvolutionGo::QrcodesController < Api::V1::BaseController
     Rails.logger.info "Evolution Go API: QR code refresh called with params: #{params.inspect}"
 
     begin
-      # Extract parameters
+      # Resolve credenciais via canal (com fallback para Admin Settings) quando
+      # o frontend mandar apenas o instance_uuid — canais legados podem ter
+      # api_url/instance_token vazios em provider_config (EVO-984).
       auth_params = params[:qrcode] || params
-      api_url = auth_params[:api_url]
-      instance_token = auth_params[:instance_token]
-      instance_uuid = auth_params[:instance_uuid]
+      instance_uuid = auth_params[:instance_uuid].presence || params[:id]
+
+      api_url, instance_token = resolve_qrcode_credentials(auth_params, instance_uuid)
 
       if api_url.blank? || instance_token.blank? || instance_uuid.blank?
         return render json: {
@@ -60,6 +62,23 @@ class Api::V1::EvolutionGo::QrcodesController < Api::V1::BaseController
   end
 
   private
+
+  def resolve_qrcode_credentials(auth_params, instance_uuid)
+    api_url = auth_params[:api_url].presence
+    instance_token = auth_params[:instance_token].presence
+
+    return [api_url, instance_token] if api_url.present? && instance_token.present?
+    return [api_url, instance_token] if instance_uuid.blank?
+
+    channel = Channel::Whatsapp.joins(:inbox)
+                               .where(provider: 'evolution_go')
+                               .where('provider_config @> ?', { instance_uuid: instance_uuid }.to_json)
+                               .first
+    return [api_url, instance_token] unless channel
+
+    creds = evolution_go_credentials_for(channel)
+    [api_url || creds[:api_url], instance_token || creds[:instance_token]]
+  end
 
   def set_instance_params
     # Para o método show, recebe instance_name ou instance_uuid da URL (params[:id])
@@ -88,11 +107,12 @@ class Api::V1::EvolutionGo::QrcodesController < Api::V1::BaseController
 
     Rails.logger.info "Evolution Go API: Found channel with config: #{whatsapp_channel.provider_config.inspect}"
 
+    creds = evolution_go_credentials_for(whatsapp_channel)
     @inbox = whatsapp_channel.inbox
-    @api_url = whatsapp_channel.provider_config['api_url']
-    @instance_token = whatsapp_channel.provider_config['instance_token']
-    @instance_uuid = whatsapp_channel.provider_config['instance_uuid']
-    @instance_name = whatsapp_channel.provider_config['instance_name']
+    @api_url = creds[:api_url]
+    @instance_token = creds[:instance_token]
+    @instance_uuid = creds[:instance_uuid]
+    @instance_name = creds[:instance_name]
   end
 
   def get_qrcode_go(api_url, instance_token)

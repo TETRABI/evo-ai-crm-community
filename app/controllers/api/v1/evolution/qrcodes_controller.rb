@@ -1,4 +1,6 @@
 class Api::V1::Evolution::QrcodesController < Api::V1::BaseController
+  include EvolutionConcern
+
   def show
     Rails.logger.info "Evolution API get QR code called for instance: #{params[:id]}"
 
@@ -7,8 +9,7 @@ class Api::V1::Evolution::QrcodesController < Api::V1::BaseController
       channel = find_whatsapp_channel_by_instance_name(instance_name)
 
       if channel
-        api_url = channel.provider_config['api_url']
-        api_hash = channel.provider_config['admin_token']
+        api_url, api_hash = evolution_credentials_for!(channel)
 
         result = get_qrcode(api_url, api_hash, instance_name)
 

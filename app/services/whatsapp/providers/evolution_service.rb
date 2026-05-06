@@ -145,6 +145,30 @@ class Whatsapp::Providers::EvolutionService < Whatsapp::Providers::BaseService
     "#{api_base_path}/media/#{media_id}"
   end
 
+  # Fetches the group subject (real name) for a group JID via Evolution API REST.
+  # Cached in Redis for 1h per (channel, group_jid) so we don't hammer the API on
+  # every webhook. Returns nil on any failure — caller handles the fallback.
+  def fetch_group_subject(group_jid)
+    return nil if group_jid.blank?
+    return nil if api_base_path.blank? || instance_name.blank?
+
+    cache_key = "evolution:group_subject:#{whatsapp_channel.id}:#{group_jid}"
+    cached = Redis::Alfred.get(cache_key)
+    return cached if cached.present?
+
+    url = "#{api_base_path}/group/findGroupInfos/#{instance_name}?groupJid=#{URI.encode_www_form_component(group_jid)}"
+    response = HTTParty.get(url, headers: api_headers, timeout: 5)
+    return nil unless response.success?
+
+    parsed = response.parsed_response
+    subject = parsed.is_a?(Hash) ? (parsed['subject'].presence || parsed.dig('groupMetadata', 'subject').presence) : nil
+    Redis::Alfred.setex(cache_key, subject, 1.hour) if subject.present?
+    subject
+  rescue StandardError => e
+    Rails.logger.warn "Evolution API: fetch_group_subject failed for #{group_jid}: #{e.message}"
+    nil
+  end
+
   def subscribe_to_webhooks
     # Evolution API webhook subscription if needed
     Rails.logger.info 'Evolution API webhook subscription not implemented'
@@ -168,6 +192,47 @@ class Whatsapp::Providers::EvolutionService < Whatsapp::Providers::BaseService
 
     Rails.logger.info "Evolution API: Logout failed, attempting to delete instance #{instance_name}"
     try_delete_instance(instance_name)
+  end
+
+  # Fetch a contact's WhatsApp profile picture URL via Evolution API.
+  # Returns the URL string when present, or nil on any failure / missing picture.
+  # The endpoint is best-effort — Evolution responses vary across versions, so we
+  # accept several common shapes for the picture URL field.
+  def fetch_profile_picture_url(phone_number)
+    number = phone_number.to_s.delete('+')
+    return nil if number.blank? || api_base_path.blank? || instance_name.blank?
+
+    response = HTTParty.post(
+      "#{api_base_path}/chat/fetchProfilePictureUrl/#{instance_name}",
+      headers: api_headers,
+      body: { number: number }.to_json,
+      open_timeout: 5,
+      read_timeout: 10
+    )
+
+    unless response.success?
+      Rails.logger.warn "Evolution API: fetchProfilePictureUrl HTTP #{response.code}"
+      return nil
+    end
+
+    parsed = response.parsed_response
+    unless parsed.is_a?(Hash)
+      Rails.logger.warn "Evolution API: fetchProfilePictureUrl returned non-Hash body (#{parsed.class})"
+      return nil
+    end
+
+    if parsed['error'].present? || parsed['status'].to_s == 'error'
+      Rails.logger.warn "Evolution API: fetchProfilePictureUrl 200 OK with error body: #{parsed['error'] || parsed['message']}"
+      return nil
+    end
+
+    url = parsed['profilePictureUrl'].presence ||
+          parsed.dig('data', 'profilePictureUrl').presence ||
+          parsed['profilePicUrl'].presence
+    url.presence
+  rescue StandardError => e
+    Rails.logger.error "Evolution API: fetchProfilePictureUrl error: #{e.class} - #{e.message}"
+    nil
   end
 
   private
@@ -332,24 +397,13 @@ class Whatsapp::Providers::EvolutionService < Whatsapp::Providers::BaseService
   def generate_direct_s3_url(attachment)
     return attachment.file_url unless attachment.file.attached?
 
-    # Extract S3 details from existing signed URL
+    # Always return the signed URL — see the matching method in
+    # evolution_go_service.rb for the full rationale. Stripping the AWS
+    # signing parameters only works on public buckets; on Cloudflare R2,
+    # private S3 buckets and MinIO, the upstream provider gets a `text/xml`
+    # error body back and rejects the upload.
     signed_url = attachment.download_url
-
-    Rails.logger.info "[Evolution S3] Original signed URL: #{signed_url}"
-
-    # Try to extract bucket and key from the signed URL (flexible regex for different S3 providers)
-    if signed_url =~ %r{https://([^/]+)/([^?]+)}
-      host = Regexp.last_match(1)
-      key = Regexp.last_match(2)
-
-      # Create direct public URL - just remove query parameters
-      direct_url = "https://#{host}/#{key}"
-      Rails.logger.info "[Evolution S3] Generated direct URL: #{direct_url}"
-      return direct_url
-    end
-
-    # Fallback to original URL if can't parse
-    Rails.logger.warn "[Evolution S3] Could not parse S3 URL, using original: #{signed_url}"
+    Rails.logger.info "[Evolution S3] Using signed URL (works for both public and private buckets)"
     signed_url
   end
 

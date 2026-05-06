@@ -1,4 +1,6 @@
 class Api::V1::EvolutionGo::ProfileController < Api::V1::BaseController
+  include EvolutionGoConcern
+
   before_action :set_instance_params, only: [:show, :info, :avatar, :update_picture, :update_name, :update_status,
                                              :update_picture_by_instance, :remove_picture]
 
@@ -229,14 +231,16 @@ class Api::V1::EvolutionGo::ProfileController < Api::V1::BaseController
                                         .first
 
     if whatsapp_channel
+      creds = evolution_go_credentials_for(whatsapp_channel)
       @inbox = whatsapp_channel.inbox
-      @api_url = whatsapp_channel.provider_config['api_url']
-      @admin_token = whatsapp_channel.provider_config['admin_token']
-      @instance_token = whatsapp_channel.provider_config['instance_token']
+      @api_url = creds[:api_url]
+      @admin_token = creds[:admin_token]
+      @instance_token = creds[:instance_token]
     else
       # Fallback para parâmetros diretos (para compatibilidade)
-      @api_url = params[:api_url]
-      @admin_token = params[:admin_token]
+      creds = evolution_go_credentials_from_params(params[:api_url], params[:admin_token])
+      @api_url = creds[:api_url]
+      @admin_token = creds[:admin_token]
       @instance_token = params[:instance_token]
     end
   end
