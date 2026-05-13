@@ -89,6 +89,19 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
 
       Rails.logger.info("Instagram Events Job: Found channel #{channel.id} (#{channel.class.name}) for instagram_id: #{instagram_id}")
 
+      # Echo messages delivered via the page_id route are a Meta API side-effect.
+      # They arrive with entry.id == channel.page_id (not instagram_id) and
+      # would create spurious contacts/conversations if processed here.
+      # Legitimate outgoing echoes arrive with entry.id == channel.instagram_id
+      # and are handled correctly by Instagram::MessageText.
+      if agent_message_via_echo?(messaging_indifferent) &&
+         channel.is_a?(Channel::Instagram) &&
+         channel.page_id.present? &&
+         entry[:id].to_s == channel.page_id.to_s
+        Rails.logger.info("Instagram Events Job: Skipping echo via page_id route (entry.id=#{entry[:id]}, page_id=#{channel.page_id})")
+        next
+      end
+
       event_name_result = event_name(messaging_indifferent)
       Rails.logger.info("Instagram Events Job Messaging[#{index}] event_name result: #{event_name_result.inspect}")
 
