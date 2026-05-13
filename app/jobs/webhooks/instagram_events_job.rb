@@ -183,18 +183,25 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
     Rails.logger.info("Instagram Events Job: Resolved message_edit mid #{mid} → #{data.slice(:id, :message, :from, :to).inspect}")
 
     # Build a synthetic messaging hash that mirrors a regular `message` event payload.
-    # `from` is the sender (the user who sent the DM), `to.data[0]` is the recipient (the IG account).
-    sender_id = data.dig(:from, :id)
-    recipient_id = data.dig(:to, :data, 0, :id) || ig_account_id
+    #
+    # IMPORTANT: we use the webhook's original sender/recipient, NOT the Graph API's from/to.
+    # Under Standard Access, the Graph API swaps from/to for incoming DMs (returns the IG
+    # account as `from` instead of the actual user), making it unreliable for channel lookup.
+    # The webhook sender/recipient is always correct: sender = user who sent the DM,
+    # recipient = the IG account (channel).
+    webhook_sender_id    = messaging.dig(:sender, :id)
+    webhook_recipient_id = messaging.dig(:recipient, :id) || ig_account_id
 
-    unless sender_id.present?
-      Rails.logger.warn("Instagram Events Job: Could not determine sender from Graph API response: #{data.inspect}")
+    unless webhook_sender_id.present?
+      Rails.logger.warn("Instagram Events Job: Could not determine sender from original webhook: #{messaging.inspect}")
       return build_placeholder_messaging(messaging, mid, ig_account_id)
     end
 
+    Rails.logger.info("Instagram Events Job: Using webhook sender=#{webhook_sender_id} recipient=#{webhook_recipient_id} (Graph API from/to ignored under Standard Access)")
+
     {
-      sender:    { id: sender_id },
-      recipient: { id: recipient_id },
+      sender:    { id: webhook_sender_id },
+      recipient: { id: webhook_recipient_id },
       timestamp: data[:timestamp] || messaging[:timestamp],
       message: {
         mid:         data[:id] || mid,
