@@ -48,8 +48,20 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
       Rails.logger.info("Instagram Events Job Messaging[#{index}]: #{messaging_indifferent.inspect}")
       Rails.logger.info("Instagram Events Job Messaging[#{index}] keys: #{messaging_indifferent.keys.inspect}")
 
-      # Skip unsupported events like message_edit, reactions, etc.
-      if unsupported_event?(messaging_indifferent)
+      # Instagram Graph API changed behavior: new DMs now arrive as `message_edit` with `num_edit: 0`
+      # instead of a regular `message` event. We resolve these by fetching the full message via API.
+      # See: https://developers.facebook.com/docs/messenger-platform/instagram/features/webhook
+      if new_message_via_edit?(messaging_indifferent)
+        Rails.logger.info("Instagram Events Job: Detected message_edit with num_edit=0 (new message), resolving via Graph API")
+        ig_account_id_for_channel = entry[:id]
+        resolved = resolve_message_edit_to_messaging(messaging_indifferent, ig_account_id_for_channel)
+        if resolved.nil?
+          Rails.logger.warn("Instagram Events Job: Could not resolve message_edit to messaging, skipping")
+          next
+        end
+        messaging_indifferent = resolved
+      elsif unsupported_event?(messaging_indifferent)
+        # Skip real edits (num_edit > 0), reactions, postbacks, etc.
         Rails.logger.info("Instagram Events Job: Skipping unsupported event type: #{messaging_indifferent.keys.inspect}")
         next
       end
@@ -72,8 +84,6 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
 
       if channel.blank?
         Rails.logger.warn("Instagram Events Job: Channel not found for instagram_id: #{instagram_id}")
-        Rails.logger.warn("Instagram Events Job: Searching for Channel::Instagram with instagram_id: #{instagram_id}")
-        Rails.logger.warn("Instagram Events Job: Searching for Channel::FacebookPage with instagram_id: #{instagram_id}")
         next
       end
 
@@ -103,9 +113,81 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
     messaging[:message].present? && messaging[:message][:is_echo].present?
   end
 
+  # Returns true when Instagram delivers a NEW message disguised as a message_edit event.
+  # This happens when `num_edit == 0`, meaning it's the original (unedited) version of the message.
+  # The Instagram Graph API changed behavior so that new DMs arrive as message_edit with num_edit: 0.
+  def new_message_via_edit?(messaging)
+    return false unless messaging.is_a?(Hash)
+
+    edit = messaging.with_indifferent_access[:message_edit]
+    edit.is_a?(Hash) && edit[:num_edit].to_i == 0
+  end
+
+  # Fetches the full message content from the Instagram Graph API using the `mid` from a
+  # `message_edit` event. Returns a normalized messaging hash (same shape as a regular `message`
+  # event) that can be processed by the existing pipeline, or nil on failure.
+  def resolve_message_edit_to_messaging(messaging, ig_account_id)
+    mid = messaging.dig(:message_edit, :mid)
+    unless mid.present?
+      Rails.logger.warn("Instagram Events Job: message_edit has no mid, cannot resolve")
+      return nil
+    end
+
+    # Find the channel to get the access_token
+    channel = find_channel(ig_account_id)
+    unless channel.present?
+      Rails.logger.warn("Instagram Events Job: No channel found for ig_account_id #{ig_account_id}, cannot resolve message_edit")
+      return nil
+    end
+
+    access_token = channel.access_token
+    api_version = GlobalConfigService.load('INSTAGRAM_API_VERSION', 'v23.0')
+    fields = 'id,message,from,to,timestamp,attachments'
+    url = "https://graph.instagram.com/#{api_version}/#{mid}?fields=#{fields}&access_token=#{access_token}"
+
+    Rails.logger.info("Instagram Events Job: Fetching message #{mid} from Graph API (token filtered)")
+    response = HTTParty.get(url)
+
+    unless response.success?
+      Rails.logger.error("Instagram Events Job: Graph API returned #{response.code} for mid #{mid}: #{response.body}")
+      return nil
+    end
+
+    data = JSON.parse(response.body).with_indifferent_access
+
+    if data[:error].present?
+      Rails.logger.error("Instagram Events Job: Graph API error for mid #{mid}: #{data[:error].inspect}")
+      return nil
+    end
+
+    Rails.logger.info("Instagram Events Job: Resolved message_edit mid #{mid} → #{data.slice(:id, :message, :from, :to).inspect}")
+
+    # Build a synthetic messaging hash that mirrors a regular `message` event payload.
+    # `from` is the sender (the user who sent the DM), `to.data[0]` is the recipient (the IG account).
+    sender_id = data.dig(:from, :id)
+    recipient_id = data.dig(:to, :data, 0, :id) || ig_account_id
+
+    unless sender_id.present?
+      Rails.logger.warn("Instagram Events Job: Could not determine sender from Graph API response: #{data.inspect}")
+      return nil
+    end
+
+    {
+      sender:    { id: sender_id },
+      recipient: { id: recipient_id },
+      timestamp: data[:timestamp] || messaging[:timestamp],
+      message: {
+        mid:         data[:id] || mid,
+        text:        data[:message],
+        attachments: data[:attachments]
+      }.compact
+    }.with_indifferent_access
+  end
+
   def unsupported_event?(messaging)
     # Check if this is an unsupported event type (like message_edit, reaction, etc.)
-    # These events don't have sender/recipient and should be skipped
+    # message_edit with num_edit == 0 is handled separately via new_message_via_edit? (new DM behavior).
+    # message_edit with num_edit > 0 is a real edit and falls through to this skip.
     return false unless messaging.is_a?(Hash)
 
     messaging_indifferent = messaging.with_indifferent_access
@@ -129,10 +211,7 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
 
   def instagram_id(messaging, entry = nil)
     Rails.logger.info("Instagram Events Job: Resolving instagram_id - messaging keys: #{messaging.keys.inspect}")
-    Rails.logger.info("Instagram Events Job: messaging sender: #{messaging[:sender].inspect}, recipient: #{messaging[:recipient].inspect}")
-    Rails.logger.info("Instagram Events Job: agent_message_via_echo?: #{agent_message_via_echo?(messaging)}")
 
-    # Try to get instagram_id from sender/recipient first
     if agent_message_via_echo?(messaging)
       sender_id = messaging.dig(:sender, :id)
       Rails.logger.info("Instagram Events Job: Echo message, using sender_id: #{sender_id}")
@@ -143,14 +222,12 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
       return recipient_id if recipient_id.present?
     end
 
-    # Fallback: try to get from entry's id field (ig_account_id)
     if entry.present?
       entry_id = entry[:id]
       Rails.logger.info("Instagram Events Job: Using fallback entry[:id]: #{entry_id}")
       return entry_id if entry_id.present?
     end
 
-    # Last resort: try to get from @entries
     fallback_id = ig_account_id
     Rails.logger.info("Instagram Events Job: Using last resort ig_account_id: #{fallback_id}")
     fallback_id
@@ -161,51 +238,37 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
   end
 
   def sender_id
-    # Find the first valid messaging entry that has sender/recipient (not message_edit, etc.)
     @entries&.each do |entry|
       messaging_array = entry[:messaging] || entry[:standby] || []
       messaging_array.each do |messaging|
-        # Skip unsupported events
         next if unsupported_event?(messaging.with_indifferent_access)
 
-        # Return sender id if available
         if messaging[:sender]&.dig(:id).present?
           return messaging[:sender][:id]
         end
 
-        # For echo messages, sender is the page/account
         if messaging[:recipient]&.dig(:id).present?
           return messaging[:recipient][:id]
         end
       end
     end
 
-    # Fallback: try to get from entry id (ig_account_id)
     ig_account_id
   end
 
   def find_channel(instagram_id)
-    # There will be chances for the instagram account to be connected to a facebook page,
-    # so we need to check for both instagram and facebook page channels
-    # priority is for instagram channel which created via instagram login
     Rails.logger.info("Instagram Events Job: Searching for Channel::Instagram with instagram_id: #{instagram_id}")
     channel = Channel::Instagram.find_by(instagram_id: instagram_id)
-    Rails.logger.info("Instagram Events Job: Channel::Instagram result: #{channel.inspect}")
 
-    # If not found, fallback to the facebook page channel
     if channel.blank?
       Rails.logger.info("Instagram Events Job: Searching for Channel::FacebookPage with instagram_id: #{instagram_id}")
       channel = Channel::FacebookPage.find_by(instagram_id: instagram_id)
-      Rails.logger.info("Instagram Events Job: Channel::FacebookPage result: #{channel.inspect}")
     end
 
     if channel.present?
       Rails.logger.info("Instagram Events Job: Found channel #{channel.id} (#{channel.class.name}) with instagram_id: #{instagram_id}")
     else
       Rails.logger.warn("Instagram Events Job: No channel found for instagram_id: #{instagram_id}")
-      # Log all available channels for debugging
-      Rails.logger.warn("Instagram Events Job: Available Channel::Instagram IDs: #{Channel::Instagram.pluck(:instagram_id).inspect}")
-      Rails.logger.warn("Instagram Events Job: Available Channel::FacebookPage IDs: #{Channel::FacebookPage.pluck(:instagram_id).compact.inspect}")
     end
 
     channel
@@ -224,7 +287,6 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
   end
 
   def read(messaging, channel)
-    # Use a single service to handle read status for both channel types since the params are same
     ::Instagram::ReadStatusService.new(params: messaging, channel: channel).perform
   end
 
@@ -232,84 +294,3 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
     (entry[:messaging].presence || entry[:standby] || [])
   end
 end
-
-# Actual response from Instagram webhook (both via Facebook page and Instagram direct)
-# [
-#   {
-#     "time": <timestamp>,
-#     "id": <INSTAGRAM_USER_ID>,
-#     "messaging": [
-#       {
-#         "sender": {
-#           "id": <INSTAGRAM_USER_ID>
-#         },
-#         "recipient": {
-#           "id": <INSTAGRAM_USER_ID>
-#         },
-#         "timestamp": <timestamp>,
-#         "message": {
-#           "mid": <MESSAGE_ID>,
-#           "text": <MESSAGE_TEXT>
-#         }
-#       }
-#     ]
-#   }
-# ]
-
-# Instagram's webhook via Instagram direct testing quirk: Test payloads vs Actual payloads
-# When testing in Facebook's developer dashboard, you'll get a Page-style
-# payload with a "changes" object. But don't be fooled! Real Instagram DMs
-# arrive in the familiar Messenger format with a "messaging" array.
-# This apparent inconsistency is actually by design - Instagram's webhooks
-# use different formats for testing vs production to maintain compatibility
-# with both Instagram Direct and Facebook Page integrations.
-# See: https://developers.facebook.com/docs/instagram-platform/webhooks#event-notifications
-
-# Test response from via Instagram direct
-# [
-#   {
-#     "id": "0",
-#     "time": <timestamp>,
-#     "changes": [
-#       {
-#         "field": "messages",
-#         "value": {
-#           "sender": {
-#             "id": "12334"
-#           },
-#           "recipient": {
-#             "id": "23245"
-#           },
-#           "timestamp": "1527459824",
-#           "message": {
-#             "mid": "random_mid",
-#             "text": "random_text"
-#           }
-#         }
-#       }
-#     ]
-#   }
-# ]
-
-# Test response via Facebook page
-# [
-#   {
-#     "time": <timestamp>,,
-#     "id": "0",
-#     "messaging": [
-#       {
-#         "sender": {
-#           "id": "12334"
-#         },
-#         "recipient": {
-#           "id": "23245"
-#         },
-#         "timestamp": <timestamp>,
-#         "message": {
-#             "mid": "random_mid",
-#             "text": "random_text"
-#         }
-#       }
-#     ]
-#   }
-# ]
