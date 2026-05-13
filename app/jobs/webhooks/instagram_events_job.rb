@@ -282,6 +282,14 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
       channel = Channel::FacebookPage.find_by(instagram_id: instagram_id)
     end
 
+    # Instagram delivers incoming DMs through the linked Facebook Page ID (page_id),
+    # while echoes and subscriptions use the Instagram account ID (instagram_id).
+    # Both identifiers refer to the same channel — fall back to page_id lookup.
+    if channel.blank?
+      Rails.logger.info("Instagram Events Job: Searching for Channel::Instagram with page_id: #{instagram_id}")
+      channel = Channel::Instagram.find_by(page_id: instagram_id)
+    end
+
     if channel.present?
       Rails.logger.info("Instagram Events Job: Found channel #{channel.id} (#{channel.class.name}) with instagram_id: #{instagram_id}")
     else
