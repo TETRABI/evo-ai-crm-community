@@ -48,6 +48,8 @@ services:
     restart: unless-stopped
     entrypoint: docker/entrypoints/rails.sh
     command: bundle exec rails server -b 0.0.0.0
+    volumes:
+      - crm_storage:/app/storage
     environment:
       RAILS_ENV: production
       RAILS_LOG_TO_STDOUT: "true"
@@ -118,6 +120,8 @@ services:
     restart: unless-stopped
     entrypoint: docker/entrypoints/rails.sh
     command: bundle exec sidekiq -C config/sidekiq.yml
+    volumes:
+      - crm_storage:/app/storage
     environment:
       RAILS_ENV: production
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
@@ -688,6 +692,7 @@ services:
 volumes:
   crm_postgres_data: null
   crm_redis_data: null
+  crm_storage: null
   evo_processor_logs: null
   evolution_postgres_data: null
   evolution_redis_data: null

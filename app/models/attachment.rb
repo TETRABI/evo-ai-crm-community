@@ -113,7 +113,11 @@ class Attachment < ApplicationRecord
       fallback_title: fallback_title
     }
 
-    if attachable_type == 'Message' && attachable.inbox.instagram? && attachable.incoming?
+    # For Instagram incoming messages: prefer locally stored blob (persistent, no TTL).
+    # Fall back to external_url only when no local file is attached — the Meta CDN URL
+    # (lookaside.fbsbx.com) carries a signed token that expires in ~24h, so relying on it
+    # as the primary source causes "image unavailable" after the TTL elapses.
+    if attachable_type == 'Message' && attachable.inbox.instagram? && attachable.incoming? && !file.attached?
       metadata[:data_url] = metadata[:thumb_url] = external_url
     end
 
