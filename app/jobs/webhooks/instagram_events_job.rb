@@ -150,14 +150,14 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
 
     unless response.success?
       Rails.logger.error("Instagram Events Job: Graph API returned #{response.code} for mid #{mid}: #{response.body}")
-      return nil
+      return build_placeholder_messaging(messaging, mid, ig_account_id)
     end
 
     data = JSON.parse(response.body).with_indifferent_access
 
     if data[:error].present?
       Rails.logger.error("Instagram Events Job: Graph API error for mid #{mid}: #{data[:error].inspect}")
-      return nil
+      return build_placeholder_messaging(messaging, mid, ig_account_id)
     end
 
     Rails.logger.info("Instagram Events Job: Resolved message_edit mid #{mid} → #{data.slice(:id, :message, :from, :to).inspect}")
@@ -169,7 +169,7 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
 
     unless sender_id.present?
       Rails.logger.warn("Instagram Events Job: Could not determine sender from Graph API response: #{data.inspect}")
-      return nil
+      return build_placeholder_messaging(messaging, mid, ig_account_id)
     end
 
     {
@@ -181,6 +181,23 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
         text:        data[:message],
         attachments: data[:attachments]
       }.compact
+    }.with_indifferent_access
+  end
+
+  # Builds a fallback messaging hash when the Graph API is unavailable or lacks permission
+  # to read the full message content (requires instagram_business_manage_messages Advanced Access).
+  # Creates a placeholder DM notification so agents know a message arrived even without the content.
+  # The sender uses a per-channel placeholder ID so all "unknown" DMs for the same inbox are grouped.
+  def build_placeholder_messaging(messaging, mid, ig_account_id)
+    Rails.logger.info("Instagram Events Job: Building placeholder messaging for mid #{mid} — API unavailable, Advanced Access may be required")
+    {
+      sender:    { id: "ig_dm_pending_#{ig_account_id}" },
+      recipient: { id: ig_account_id },
+      timestamp: messaging[:timestamp],
+      message: {
+        mid:  mid,
+        text: '📩 Nova mensagem do Instagram recebida. O conteúdo não está disponível temporariamente — acesse o DM direto no Instagram para visualizar.'
+      }
     }.with_indifferent_access
   end
 
