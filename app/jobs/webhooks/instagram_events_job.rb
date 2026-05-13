@@ -142,7 +142,7 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
 
     access_token = channel.access_token
     api_version = GlobalConfigService.load('INSTAGRAM_API_VERSION', 'v23.0')
-    fields = 'id,message,from,to,timestamp,attachments'
+    fields = 'id,message,from,to,attachments'
     url = "https://graph.instagram.com/#{api_version}/#{mid}?fields=#{fields}&access_token=#{access_token}"
 
     Rails.logger.info("Instagram Events Job: Fetching message #{mid} from Graph API (token filtered)")
