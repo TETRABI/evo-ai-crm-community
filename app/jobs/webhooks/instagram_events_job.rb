@@ -48,6 +48,11 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
       Rails.logger.info("Instagram Events Job Messaging[#{index}]: #{messaging_indifferent.inspect}")
       Rails.logger.info("Instagram Events Job Messaging[#{index}] keys: #{messaging_indifferent.keys.inspect}")
 
+      # Track whether this messaging was resolved from a message_edit event.
+      # The page_id route is ONLY valid for message_edit-resolved events (real incoming DMs).
+      # Plain message events via the page_id route are echoes or outgoing reflections — must be skipped.
+      resolved_from_edit = false
+
       # Instagram Graph API changed behavior: new DMs now arrive as `message_edit` with `num_edit: 0`
       # instead of a regular `message` event. We resolve these by fetching the full message via API.
       # See: https://developers.facebook.com/docs/messenger-platform/instagram/features/webhook
@@ -60,6 +65,7 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
           next
         end
         messaging_indifferent = resolved
+        resolved_from_edit = true
       elsif unsupported_event?(messaging_indifferent)
         # Skip real edits (num_edit > 0), reactions, postbacks, etc.
         Rails.logger.info("Instagram Events Job: Skipping unsupported event type: #{messaging_indifferent.keys.inspect}")
@@ -89,16 +95,17 @@ class Webhooks::InstagramEventsJob < MutexApplicationJob
 
       Rails.logger.info("Instagram Events Job: Found channel #{channel.id} (#{channel.class.name}) for instagram_id: #{instagram_id}")
 
-      # Echo messages delivered via the page_id route are a Meta API side-effect.
-      # They arrive with entry.id == channel.page_id (not instagram_id) and
-      # would create spurious contacts/conversations if processed here.
-      # Legitimate outgoing echoes arrive with entry.id == channel.instagram_id
-      # and are handled correctly by Instagram::MessageText.
-      if agent_message_via_echo?(messaging_indifferent) &&
-         channel.is_a?(Channel::Instagram) &&
+      # The page_id route is used exclusively for DMs that arrive as message_edit (num_edit:0).
+      # Any plain `message` event arriving via entry.id == page_id is either:
+      #   - an echo (is_echo: true) of an outgoing agent message, or
+      #   - a reflection of an outgoing CRM response (no is_echo, different sender PSID).
+      # Both create spurious contacts/conversations and must be skipped.
+      # Only events resolved from message_edit (resolved_from_edit=true) are allowed through.
+      if channel.is_a?(Channel::Instagram) &&
          channel.page_id.present? &&
-         entry[:id].to_s == channel.page_id.to_s
-        Rails.logger.info("Instagram Events Job: Skipping echo via page_id route (entry.id=#{entry[:id]}, page_id=#{channel.page_id})")
+         entry[:id].to_s == channel.page_id.to_s &&
+         !resolved_from_edit
+        Rails.logger.info("Instagram Events Job: Skipping message via page_id route (entry.id=#{entry[:id]}, resolved_from_edit=false) — echo or outgoing reflection")
         next
       end
 
