@@ -5,15 +5,6 @@ class Messages::Messenger::MessageBuilder
     # This check handles very rare case if there are multiple files to attach with only one usupported file
     return if unsupported_file_type?(attachment['type'])
 
-    # Quando message_content ja extraiu a URL do payload como conteudo do message
-    # (share, ig_reel, ou qualquer tipo com payload.url), nao baixar o attachment
-    # como arquivo - evita Down.download de paginas HTML/reels e caixa vazia.
-    attachment_url = (attachment['payload'].is_a?(Hash) && attachment['payload']['url']) ||
-                     (attachment[:payload].is_a?(Hash) && attachment[:payload][:url])
-    if attachment_url.present? && @message.content.present?
-      return
-    end
-
     attachment_obj = @message.attachments.new(attachment_params(attachment).except(:remote_file_url))
     attachment_obj.save!
     attach_file(attachment_obj, attachment_params(attachment)[:remote_file_url]) if attachment_params(attachment)[:remote_file_url]
