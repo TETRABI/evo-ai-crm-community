@@ -21,7 +21,17 @@ class Messages::Instagram::BaseMessageBuilder < Messages::Messenger::MessageBuil
   private
 
   def attachments
-    @messaging[:message][:attachments] || {}
+    raw = @messaging.dig(:message, :attachments) || []
+    # Graph API (message_edit) retorna {"data": [{type: "share", ...}]} (Hash).
+    # Webhooks retornam [{type: "share", ...}] (Array).
+    # Normalizar para sempre retornar Array iteravel.
+    if raw.is_a?(Array)
+      raw
+    elsif raw.is_a?(Hash)
+      raw['data'] || raw[:data] || []
+    else
+      []
+    end
   end
 
   def message_type
@@ -87,7 +97,8 @@ class Messages::Instagram::BaseMessageBuilder < Messages::Messenger::MessageBuil
     # O payload chega como: {attachments: [{type: "share", payload: {url: "https://..."}}]}
     # Extrair a URL como conteudo de texto evita que Down.download tente baixar HTML
     # e o frontend exiba "arquivo" em vez do link.
-    share = (attachments rescue []).find { |a| a['type'] == 'share' || a[:type] == 'share' }
+    # attachments() normaliza Array vs Hash - sempre retorna Array
+    share = attachments.find { |a| a['type'] == 'share' || a[:type] == 'share' }
     share&.dig('payload', 'url') || share&.dig(:payload, :url)
   end
 
