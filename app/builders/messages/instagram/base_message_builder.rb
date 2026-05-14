@@ -21,7 +21,17 @@ class Messages::Instagram::BaseMessageBuilder < Messages::Messenger::MessageBuil
   private
 
   def attachments
-    @messaging[:message][:attachments] || {}
+    raw = @messaging.dig(:message, :attachments) || []
+    # Graph API (message_edit) retorna {"data": [{type: "share", ...}]} (Hash).
+    # Webhooks diretos retornam [{type: "share", ...}] (Array).
+    # Normalizar para sempre retornar Array iteravel.
+    if raw.is_a?(Array)
+      raw
+    elsif raw.is_a?(Hash)
+      raw['data'] || raw[:data] || []
+    else
+      []
+    end
   end
 
   def message_type
@@ -80,7 +90,15 @@ class Messages::Instagram::BaseMessageBuilder < Messages::Messenger::MessageBuil
   end
 
   def message_content
-    @messaging[:message][:text]
+    text = @messaging.dig(:message, :text)
+    return text if text.present?
+
+    # Apenas share attachments (links compartilhados) sao extraidos como texto.
+    # image, audio, video, file: usar process_attachment normal -- nao capturar URL aqui.
+    # Se capturar image, o guard em process_attachment (attachment_url && message.content.present?)
+    # pula o download e a foto nunca e exibida.
+    share = attachments.find { |a| a['type'] == 'share' || a[:type] == :share }
+    share&.dig('payload', 'url') || share&.dig(:payload, :url)
   end
 
   def story_reply_attributes
