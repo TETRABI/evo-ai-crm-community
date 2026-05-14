@@ -93,16 +93,13 @@ class Messages::Instagram::BaseMessageBuilder < Messages::Messenger::MessageBuil
     text = @messaging.dig(:message, :text)
     return text if text.present?
 
-    # Para qualquer attachment com URL no payload (share, ig_reel, video link, etc.):
-    # extrair a URL como texto evita Down.download de paginas HTML/reels
-    # e o frontend exibir "arquivo" ou caixa vazia.
-    # Tipos conhecidos: "share" (link compartilhado), "ig_reel" (reel Instagram).
-    # Qualquer outro tipo com payload.url tambem e coberto.
-    url_attachment = attachments.find { |a|
-      (a['payload'].is_a?(Hash) && a['payload']['url'].present?) ||
-      (a[:payload].is_a?(Hash) && a[:payload][:url].present?)
-    }
-    url_attachment&.dig('payload', 'url') || url_attachment&.dig(:payload, :url)
+    # Apenas share attachments (links compartilhados) sao extraidos como texto.
+    # image, audio, video, file: usar process_attachment normal -- nao capturar URL aqui.
+    # REGRESSO CORRIGIDO: capturar qualquer payload.url incluia fotos, que nunca eram
+    # exibidas porque o guard em process_attachment pulava o download quando
+    # message.content ja estava preenchido.
+    share = attachments.find { |a| a['type'] == 'share' || a[:type] == :share }
+    share&.dig('payload', 'url') || share&.dig(:payload, :url)
   end
 
   def story_reply_attributes
