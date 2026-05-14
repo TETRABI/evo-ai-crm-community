@@ -5,6 +5,15 @@ class Messages::Messenger::MessageBuilder
     # This check handles very rare case if there are multiple files to attach with only one usupported file
     return if unsupported_file_type?(attachment['type'])
 
+    # Links compartilhados via Instagram DM chegam como type="share".
+    # Quando message_content ja extraiu a URL (ver base_message_builder.rb),
+    # nao ha nada para anexar - pular evita o Down.download de paginas HTML
+    # que resulta em file_type :file e o frontend exibindo "arquivo".
+    if (attachment['type'] == 'share' || attachment[:type] == 'share') &&
+       @message.content.present?
+      return
+    end
+
     attachment_obj = @message.attachments.new(attachment_params(attachment).except(:remote_file_url))
     attachment_obj.save!
     attach_file(attachment_obj, attachment_params(attachment)[:remote_file_url]) if attachment_params(attachment)[:remote_file_url]

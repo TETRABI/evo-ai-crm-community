@@ -80,7 +80,15 @@ class Messages::Instagram::BaseMessageBuilder < Messages::Messenger::MessageBuil
   end
 
   def message_content
-    @messaging[:message][:text]
+    text = @messaging.dig(:message, :text)
+    return text if text.present?
+
+    # Para share attachments (links compartilhados), a Meta API nao envia :text.
+    # O payload chega como: {attachments: [{type: "share", payload: {url: "https://..."}}]}
+    # Extrair a URL como conteudo de texto evita que Down.download tente baixar HTML
+    # e o frontend exiba "arquivo" em vez do link.
+    share = (attachments rescue []).find { |a| a['type'] == 'share' || a[:type] == 'share' }
+    share&.dig('payload', 'url') || share&.dig(:payload, :url)
   end
 
   def story_reply_attributes
