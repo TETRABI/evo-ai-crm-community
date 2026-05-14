@@ -21,17 +21,7 @@ class Messages::Instagram::BaseMessageBuilder < Messages::Messenger::MessageBuil
   private
 
   def attachments
-    raw = @messaging.dig(:message, :attachments) || []
-    # Graph API (message_edit) retorna {"data": [{type: "share", ...}]} (Hash).
-    # Webhooks retornam [{type: "share", ...}] (Array).
-    # Normalizar para sempre retornar Array iteravel.
-    if raw.is_a?(Array)
-      raw
-    elsif raw.is_a?(Hash)
-      raw['data'] || raw[:data] || []
-    else
-      []
-    end
+    @messaging[:message][:attachments] || {}
   end
 
   def message_type
@@ -90,19 +80,7 @@ class Messages::Instagram::BaseMessageBuilder < Messages::Messenger::MessageBuil
   end
 
   def message_content
-    text = @messaging.dig(:message, :text)
-    return text if text.present?
-
-    # Para qualquer attachment com URL no payload (share, ig_reel, video link, etc.):
-    # extrair a URL como texto evita Down.download de paginas HTML/reels
-    # e o frontend exibir "arquivo" ou caixa vazia.
-    # Tipos conhecidos: "share" (link compartilhado), "ig_reel" (reel Instagram).
-    # Qualquer outro tipo com payload.url tambem e coberto.
-    url_attachment = attachments.find { |a|
-      (a['payload'].is_a?(Hash) && a['payload']['url'].present?) ||
-      (a[:payload].is_a?(Hash) && a[:payload][:url].present?)
-    }
-    url_attachment&.dig('payload', 'url') || url_attachment&.dig(:payload, :url)
+    @messaging[:message][:text]
   end
 
   def story_reply_attributes
