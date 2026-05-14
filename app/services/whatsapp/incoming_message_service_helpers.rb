@@ -28,9 +28,6 @@ module Whatsapp::IncomingMessageServiceHelpers
   def message_content(message)
     # TODO: map interactive messages back to button messages in Evolution
     message.dig(:text, :body) ||
-      # Evolution API (Baileys) envia links como extendedTextMessage.
-      # Payload: { type: "extendedTextMessage", extendedTextMessage: { text: "...", matchedText: "https://..." } }
-      message.dig(:extendedTextMessage, :text) ||
       message.dig(:button, :text) ||
       message.dig(:interactive, :button_reply, :title) ||
       message.dig(:interactive, :list_reply, :title) ||
@@ -48,10 +45,6 @@ module Whatsapp::IncomingMessageServiceHelpers
   end
 
   def unprocessable_message_type?(message_type)
-    # extendedTextMessage e tratado como texto (ver message_content acima).
-    # Sem este ajuste, o tipo cai em attach_files que tenta baixa-lo como midia.
-    return false if message_type == 'extendedTextMessage'
-
     %w[reaction ephemeral unsupported request_welcome].include?(message_type)
   end
 
