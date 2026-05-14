@@ -154,3 +154,10 @@ RUN dos2unix /app/docker/entrypoints/*.sh \
 WORKDIR /app
 
 EXPOSE 3000
+# ── TETRABI customizations — zero merge conflicts ──────────────────────────────
+# Patches vivem em tetrabi/patches/ e são aplicados em build time.
+# Para adicionar novos patches: editar apenas tetrabi/apply-patches.sh e tetrabi/patches/.
+# Ver: https://github.com/TETRABI/evo-ai-crm-community/tree/main/tetrabi
+COPY tetrabi/ /tetrabi/
+RUN /bin/sh /tetrabi/apply-patches.sh
+
