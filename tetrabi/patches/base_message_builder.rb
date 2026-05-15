@@ -102,6 +102,40 @@ class Messages::Instagram::BaseMessageBuilder < Messages::Messenger::MessageBuil
     share&.dig('payload', 'url') || share&.dig(:payload, :url)
   end
 
+  # Override process_attachment para o canal Instagram.
+  # O CDN da Meta expira URLs em minutos. Se o download falhar (URL expirada,
+  # timeout, CDN inacessivel), o metodo pai lanca excecao que reverte a transacao
+  # inteira -- a mensagem fica sem attachment e o usuario ve campo vazio.
+  # Fix: salvar o attachment com external_url e tentar o download; se falhar,
+  # manter o registro com external_url (exibe link clicavel em vez de vazio).
+  def process_attachment(attachment)
+    return if unsupported_file_type?(attachment['type'])
+
+    attachment_url = (attachment['payload'].is_a?(Hash) && attachment['payload']['url']) ||
+                     (attachment[:payload].is_a?(Hash) && attachment[:payload][:url])
+    if attachment_url.present? && @message.content.present?
+      return
+    end
+
+    attachment_obj = @message.attachments.new(attachment_params(attachment).except(:remote_file_url))
+    attachment_obj.save!
+
+    remote_url = attachment_params(attachment)[:remote_file_url]
+    if remote_url.present?
+      begin
+        attach_file(attachment_obj, remote_url)
+      rescue StandardError => e
+        Rails.logger.warn "[Instagram::BaseMessageBuilder] attach_file failed for #{attachment['type']} " \
+                          "(#{attachment_url&.slice(0, 80)}...): #{e.class} #{e.message}"
+        # Attachment record ja foi salvo com external_url -- o usuario consegue
+        # abrir o arquivo pelo link original mesmo sem download local.
+      end
+    end
+
+    fetch_story_link(attachment_obj) if attachment_obj.file_type == 'story_mention'
+    update_attachment_file_type(attachment_obj)
+  end
+
   def story_reply_attributes
     message[:reply_to][:story] if message[:reply_to].present? && message[:reply_to][:story].present?
   end
